@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard</title>
+    <title>Manage Schedule - {{ user.name }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Employee Dashboard</h1>
+        <h1 class="text-center">Manage Schedule for {{ user.name }}</h1>
 
-        <h2 class="mt-4">Edit Your Weekly Schedule</h2>
         <form method="post">
-            <table class="table table-bordered">
+            <table class="table table-bordered mt-4">
                 <thead>
                     <tr>
                         <th>Day</th>
@@ -39,35 +38,16 @@
                                 {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_virtual %}checked{% endif %}{% endfor %}>
                         </td>
                         <td>
-                            <input type="checkbox" name="is_unavailable_{{ day }}" class="form-check-input"
-                                {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_unavailable %}checked{% endif %}{% endfor %}>
+                            <input type="checkbox" name="is_unavailable_{{ day }}" class="form-check-input">
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
+            <button type="submit" class="btn btn-primary w-100">Save Changes</button>
         </form>
 
-        <h2 class="mt-4">Request Time Off</h2>
-        <form method="post" action="{{ url_for('request_day_off') }}">
-            <div class="mb-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control" id="date" name="date" required>
-            </div>
-            <button type="submit" class="btn btn-warning w-100">Request Day Off</button>
-        </form>
-
-        <h2 class="mt-4">Your Time Off Requests</h2>
-        <ul class="list-group">
-            {% for request in time_off_requests %}
-            <li class="list-group-item">
-                {{ request.date }} - {{ request.status }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">Logout</a>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary mt-3">Back to Dashboard</a>
     </div>
 </body>
 </html>

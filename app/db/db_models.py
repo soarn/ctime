@@ -16,9 +16,10 @@ class WeeklySchedule(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('weekly_schedules', lazy=True))
     day_of_week = db.Column(db.String(10), nullable=False)  # e.g., 'Monday'
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
+    start_time = db.Column(db.Time, nullable=True)
+    end_time = db.Column(db.Time, nullable=True)
     is_virtual = db.Column(db.Boolean, default=False)
+    is_unavailable = db.Column(db.Boolean, default=False)
 
 class TimeOffRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)

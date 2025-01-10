@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        function toggleView() {
+            const grid = document.getElementById('user-grid');
+            const list = document.getElementById('user-list');
+            grid.classList.toggle('d-none');
+            list.classList.toggle('d-none');
+        }
+    </script>
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Admin Dashboard</h1>
 
+        <!-- Time Off Requests Section -->
         <h2 class="mt-4">Time Off Requests</h2>
         <table class="table table-bordered">
             <thead>
@@ -40,41 +49,70 @@
                 {% endfor %}
             </tbody>
         </table>
-        
-        <h2 class="mt-4">Weekly Schedules</h2>
+
+        <!-- Employees Grid/List Section -->
+        <h2 class="mt-4">Employees</h2>
+        <button class="btn btn-secondary mb-3" onclick="toggleView()">Toggle View</button>
+
+        <!-- Grid View -->
+        <div id="user-grid" class="row">
+            {% for user in users %}
+            <div class="col-md-3">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">{{ user.name }}</h5>
+                        <a href="{{ url_for('view_user', user_id=user.id) }}" class="btn btn-primary">Manage Schedule</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- List View -->
+        <div id="user-list" class="d-none">
+            <ul class="list-group">
+                {% for user in users %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ user.name }}
+                    <a href="{{ url_for('view_user', user_id=user.id) }}" class="btn btn-primary btn-sm">Manage Schedule</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Weekly Schedule Table -->
+        <h2 class="mt-4">Weekly Schedule Overview</h2>
         <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>Employee</th>
-                    <th>Day</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Virtual</th>
-                    <th>Actions</th>
+                    {% for day_date in week_dates %}
+                    <th>{{ day_date.strftime('%A') }}<br>{{ day_date.strftime('%b %d') }}</th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
-                {% for schedule in weekly_schedules %}
+                {% for user in users %}
                 <tr>
-                    <td>{{ schedule.user.name }}</td>
-                    <td>{{ schedule.day_of_week }}</td>
-                    <td>{{ schedule.start_time }}</td>
-                    <td>{{ schedule.end_time }}</td>
-                    <td>{{ 'Yes' if schedule.is_virtual else 'No' }}</td>
+                    <td>{{ user.name }}</td>
+                    {% for day_name, day_data in user_schedule_mapping[user.id].items() %}
                     <td>
-                        <form method="post" class="d-inline">
-                            <input type="hidden" name="delete_schedule" value="{{ schedule.id }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                        </form>
+                        {% if day_data.has_time_off %}
+                        <span class="badge bg-warning text-dark">Day Off</span>
+                        {% elif day_data.schedule %}
+                            {{ day_data.schedule.start_time }} - {{ day_data.schedule.end_time }}
+                            {% if day_data.schedule.is_virtual %}<span class="badge bg-info">Virtual</span>{% endif %}
+                        {% else %}
+                        <span class="text-muted">No Schedule</span>
+                        {% endif %}
                     </td>
+                    {% endfor %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        
 
-        <a href="{{ url_for('add_schedule') }}" class="btn btn-primary">Add Schedule</a>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">Logout</a>
     </div>
 </body>
 </html>

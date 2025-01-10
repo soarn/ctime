@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -80,16 +80,26 @@ def create_app():
         user_id = session['user_id']
 
         if request.method == 'POST':
-            days_of_week = request.form.getlist('days_of_week')
-            start_time = request.form['start_time']
-            end_time = request.form['end_time']
-            is_virtual = 'is_virtual' in request.form
+            # Overwrite existing schedules
+            WeeklySchedule.query.filter_by(user_id=user_id).delete()
 
-            for day in days_of_week:
-                new_schedule = WeeklySchedule(user_id=user_id, day_of_week=day, start_time=start_time, end_time=end_time, is_virtual=is_virtual)
+            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                start_time = request.form.get(f'start_time_{day}')
+                end_time = request.form.get(f'end_time_{day}')
+                is_virtual = request.form.get(f'is_virtual_{day}') == 'on'
+                is_unavailable = request.form.get(f'is_unavailable_{day}') == 'on'
+
+                new_schedule = WeeklySchedule(
+                    user_id=user_id,
+                    day_of_week=day,
+                    start_time=start_time if not is_unavailable else None,
+                    end_time=end_time if not is_unavailable else None,
+                    is_virtual=is_virtual,
+                    is_unavailable=is_unavailable
+                )
                 db.session.add(new_schedule)
-            db.session.commit()
 
+            db.session.commit()
             flash('Schedule updated successfully', 'success')
 
         weekly_schedules = WeeklySchedule.query.filter_by(user_id=user_id).all()
@@ -115,37 +125,66 @@ def create_app():
                 time_off_request.status = 'rejected'
                 db.session.commit()
                 flash('Time off request rejected.', 'danger')
-            elif 'delete_schedule' in request.form:
-                schedule_id = request.form['delete_schedule']
-                schedule = WeeklySchedule.query.get(schedule_id)
-                db.session.delete(schedule)
-                db.session.commit()
-                flash('Schedule deleted.', 'success')
 
+        # Calculate the current week's dates starting from Sunday
+        today = datetime.today()
+        start_of_week = today - timedelta(days=today.weekday() + 1)
+        week_dates = [(start_of_week + timedelta(days=i)).date() for i in range(7)]  # Sunday to Saturday
+
+        # Retrieve all data
+        users = User.query.filter_by(role='employee').all()
         weekly_schedules = WeeklySchedule.query.all()
         time_off_requests = TimeOffRequest.query.all()
 
-        return render_template('admin_dashboard.html', weekly_schedules=weekly_schedules, time_off_requests=time_off_requests)
+        # Create a mapping of user schedules for display
+        user_schedule_mapping = {}
+        for user in users:
+            user_schedule_mapping[user.id] = {}
+            for i, day_date in enumerate(week_dates):
+                day_name = day_date.strftime('%A')  # Get the day name
+                schedule = next((s for s in weekly_schedules if s.user_id == user.id and s.day_of_week == day_name), None)
+                has_time_off = any(r for r in time_off_requests if r.user_id == user.id and r.date == day_date and r.status == 'approved')
+                user_schedule_mapping[user.id][day_name] = {
+                    'schedule': schedule,
+                    'has_time_off': has_time_off
+                }
 
-    @app.route('/add_schedule', methods=['GET', 'POST'])
-    def add_schedule():
+        return render_template(
+            'admin_dashboard.html',
+            users=users,
+            week_dates=week_dates,
+            user_schedule_mapping=user_schedule_mapping,
+            time_off_requests=time_off_requests
+        )
+
+    @app.route('/view_user/<int:user_id>', methods=['GET', 'POST'])
+    def view_user(user_id):
+        if 'user_id' not in session or session.get('role') != 'admin':
+            return redirect(url_for('login'))
+
+        user = User.query.get_or_404(user_id)
         if request.method == 'POST':
-            user_id = request.form['user_id']
-            days_of_week = request.form.getlist('days_of_week')
-            start_time = request.form['start_time']
-            end_time = request.form['end_time']
-            is_virtual = 'is_virtual' in request.form
+            WeeklySchedule.query.filter_by(user_id=user_id).delete()
+            for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                start_time = request.form.get(f'start_time_{day}')
+                end_time = request.form.get(f'end_time_{day}')
+                is_virtual = request.form.get(f'is_virtual_{day}') == 'on'
+                is_unavailable = request.form.get(f'is_unavailable_{day}') == 'on'
 
-            for day in days_of_week:
-                new_schedule = WeeklySchedule(user_id=user_id, day_of_week=day, start_time=start_time, end_time=end_time, is_virtual=is_virtual)
+                new_schedule = WeeklySchedule(
+                    user_id=user_id,
+                    day_of_week=day,
+                    start_time=start_time if not is_unavailable else None,
+                    end_time=end_time if not is_unavailable else None,
+                    is_virtual=is_virtual,
+                    is_unavailable=is_unavailable
+                )
                 db.session.add(new_schedule)
             db.session.commit()
+            flash(f'Schedule updated for {user.name}.', 'success')
 
-            flash('Schedule added successfully', 'success')
-            return redirect(url_for('admin_dashboard'))
-
-        users = User.query.filter_by(role='employee').all()
-        return render_template('add_schedule.html', users=users)
+        weekly_schedules = WeeklySchedule.query.filter_by(user_id=user_id).all()
+        return render_template('view_user.html', user=user, weekly_schedules=weekly_schedules)
 
     @app.route('/request_day_off', methods=['POST'])
     def request_day_off():
