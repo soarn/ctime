@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+python-dotenv
+pytest
+gunicorn
+flasgger
+jinja2
+pymysql
+flask_login
+requests
+cryptography
+flask-migrate
+flask-wtf
+email-validator
+user-agents

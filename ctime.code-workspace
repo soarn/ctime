@@ -1,0 +1,137 @@
+{
+	"folders": [
+	  {
+		"path": "."
+	  }
+	],
+	"launch": {
+	  "version": "0.2.0",
+	  "configurations": [
+		{
+		  "name": "Python: Flask",
+		  "type": "debugpy",
+		  "request": "launch",
+		  "program": "${workspaceFolder}/app/app.py",
+		  "console": "integratedTerminal",
+		  "env": {
+			"FLASK_APP": "app/app.py",             // Set Flask app environment variable
+			"FLASK_ENV": "development",            // Enable Flask development mode (includes debug)
+			"FLASK_DEBUG": "1",                    // Enable Flask debugging
+			"PYTHONPATH": "${workspaceFolder}"     // Include workspace in the Python path
+		  },
+		  "args": [
+			"run",
+			"--no-debugger",
+			"--no-reload"
+		  ],
+		  "jinja": true
+		},
+		{
+		  "name": "Python: Flask (with Debugger)",
+		  "type": "debugpy",
+		  "request": "launch",
+		  "program": "${workspaceFolder}/app/app.py",
+		  "console": "integratedTerminal",
+		  "env": {
+			"FLASK_APP": "app/app.py",
+			"FLASK_ENV": "development",
+			"FLASK_DEBUG": "1"
+		  },
+		  "args": [
+			"run"
+		  ],
+		  "jinja": true
+		}
+	  ]
+	},
+	"tasks": {
+	  "version": "2.0.0",
+	  "tasks": [
+		{
+		  "label": "Pull dotenv vault",
+		  "command": "npx --yes dotenv-vault@latest pull",
+		  "type": "shell",
+		  "args": [],
+		  "problemMatcher": [],
+		  "group": "build",
+		  "runOptions": {
+			"runOn": "folderOpen"
+		  },
+		  "presentation": {
+			"echo": false,
+			"reveal": "silent",
+			"focus": false,
+			"panel": "new",
+			"close": true
+		  }
+		},
+		{
+		  "label": "Install requirements.txt",
+		  "command": "pip install -r requirements.txt",
+		  "type": "shell",
+		  "args": [],
+		  "problemMatcher": [],
+		  "group": {
+			"kind": "build",
+			"isDefault": true
+		  },
+		  "runOptions": {
+			"runOn": "folderOpen"
+		  },
+		  "presentation": {
+			"echo": false,
+			"reveal": "silent",
+			"focus": false,
+			"panel": "new",
+			"close": true
+		  }
+		}
+	  ]
+	},
+	"settings": {
+	  "git.autofetch": true,
+  
+	  "workbench.colorCustomizations": {
+		// From https://stackoverflow.com/a/50322474
+		// will change the color of three dots to red
+		"editorHint.foreground": "#ff0000",
+		// will underline the entire word with dots in your chosen color
+		"editorHint.border": "#00ff66"
+	  },
+	  "files.autoSave": "afterDelay",
+	  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  
+	  // From https://stackoverflow.com/a/76901285
+	  "python.terminal.activateEnvironment": true,
+	  "python.terminal.activateEnvInCurrentTerminal": false,
+	  "cSpell.words": [
+		"autofetch",
+		"Bootswatch",
+		"flasgger",
+		"jsonify",
+		"sqlalchemy",
+		"tickerwrapper",
+		"venv",
+		"werkzeug"
+	  ],
+	  "prettier.bracketSameLine": true
+	},
+	"extensions": {
+	  "recommendations": [
+		"anbuselvanrocky.bootstrap5-vscode",
+		"hossaini.bootstrap-intellisense",
+		"github.vscode-pull-request-github",
+		"streetsidesoftware.code-spell-checker",
+		"usernamehw.errorlens",
+		"cstrap.flask-snippets",
+		"waseemakram.jinja-snippets-flask",
+		"esbenp.prettier-vscode",
+		"rangav.vscode-thunder-client",
+		"lior-chamla.google-fonts",
+		"ms-python.python",
+		"davidanson.vscode-markdownlint",
+		"dotenv.dotenv-vscode"
+	  ]
+	}
+  }
+  
