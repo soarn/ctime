@@ -1,16 +1,24 @@
 from datetime import timedelta, datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_mysqldb import MySQL
+from flasgger import Swagger
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from db.db import db
 from db.db_models import User, WeeklySchedule, TimeOffRequest
+from routes.web import web
+from flask_migrate import Migrate
 import os
 
 def create_app():
 
+    # Initialize Flask App
     app = Flask(__name__)
 
-    # SQLAlchemy Configuration
+    # Initialize Swagger
+    swagger = Swagger(app)
+
+    # Database Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("CONNECTION_STRING")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -18,59 +26,81 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
     app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)
 
+    # CSRF Protection
+    csrf = CSRFProtect(app)
 
 
+    # Initialize the database
+    # External call to prevent circular imports
     db.init_app(app)
 
-    @app.route('/')
-    def index():
-        if 'user_id' in session:
-            return redirect(url_for('dashboard'))
-        return render_template('index.html')
+    # Initialize Migrate
+    migrate = Migrate(app, db)
 
-    @app.route('/login', methods=['GET', 'POST'])
-    def login():
-        if request.method == 'POST':
-            email = request.form['email']
-            password = request.form['password']
+    # Register Blueprints
+    app.register_blueprint(web)
 
-            user = User.query.filter_by(email=email).first()
-            if user and check_password_hash(user.password, password):
-                session['user_id'] = user.id
-                session['role'] = user.role
-                return redirect(url_for('dashboard'))
-            else:
-                flash('Invalid credentials', 'danger')
+    # Initialize Login Manager
+    login_manager = LoginManager(app)
+    # Redirect users to the login page if they are not logged in
+    login_manager.login_view = 'web.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'info'
 
-        return render_template('login.html')
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
-    @app.route('/register', methods=['GET', 'POST'])
-    def register():
-        if request.method == 'POST':
-            name = request.form['name']
-            email = request.form['email']
-            password = generate_password_hash(request.form['password'])
-            role = request.form['role']
 
-            new_user = User(name=name, email=email, password=password, role=role)
-            db.session.add(new_user)
-            db.session.commit()
+    # @app.route('/')
+    # def index():
+    #     if 'user_id' in session:
+    #         return redirect(url_for('dashboard'))
+    #     return render_template('index.html')
 
-            flash('Registration successful', 'success')
-            return redirect(url_for('login'))
+    # @app.route('/login', methods=['GET', 'POST'])
+    # def login():
+    #     if request.method == 'POST':
+    #         email = request.form['email']
+    #         password = request.form['password']
 
-        return render_template('register.html')
+    #         user = User.query.filter_by(email=email).first()
+    #         if user and check_password_hash(user.password, password):
+    #             session['user_id'] = user.id
+    #             session['role'] = user.role
+    #             return redirect(url_for('dashboard'))
+    #         else:
+    #             flash('Invalid credentials', 'danger')
 
-    @app.route('/dashboard')
-    def dashboard():
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
+    #     return render_template('login.html')
 
-        user_role = session.get('role')
-        if user_role == 'admin':
-            return redirect(url_for('admin_dashboard'))
-        else:
-            return redirect(url_for('employee_dashboard'))
+    # @app.route('/register', methods=['GET', 'POST'])
+    # def register():
+    #     if request.method == 'POST':
+    #         name = request.form['name']
+    #         email = request.form['email']
+    #         password = generate_password_hash(request.form['password'])
+    #         role = request.form['role']
+
+    #         new_user = User(name=name, email=email, password=password, role=role)
+    #         db.session.add(new_user)
+    #         db.session.commit()
+
+    #         flash('Registration successful', 'success')
+    #         return redirect(url_for('login'))
+
+    #     return render_template('register.html')
+
+    # @app.route('/dashboard')
+    # def dashboard():
+    #     if 'user_id' not in session:
+    #         return redirect(url_for('login'))
+
+    #     user_role = session.get('role')
+    #     if user_role == 'admin':
+    #         return redirect(url_for('admin_dashboard'))
+    #     else:
+    #         return redirect(url_for('employee_dashboard'))
 
     @app.route('/employee_dashboard', methods=['GET', 'POST'])
     def employee_dashboard():
@@ -215,5 +245,4 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    db.create_all()
     app.run(debug=True)
