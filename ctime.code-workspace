@@ -48,24 +48,6 @@
 	  "version": "2.0.0",
 	  "tasks": [
 		{
-		  "label": "Pull dotenv vault",
-		  "command": "npx --yes dotenv-vault@latest pull",
-		  "type": "shell",
-		  "args": [],
-		  "problemMatcher": [],
-		  "group": "build",
-		  "runOptions": {
-			"runOn": "folderOpen"
-		  },
-		  "presentation": {
-			"echo": false,
-			"reveal": "silent",
-			"focus": false,
-			"panel": "new",
-			"close": true
-		  }
-		},
-		{
 		  "label": "Install requirements.txt",
 		  "command": "pip install -r requirements.txt",
 		  "type": "shell",
