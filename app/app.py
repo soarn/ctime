@@ -1,6 +1,5 @@
 from datetime import timedelta, datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from db.db import db
 from db.db_models import User, WeeklySchedule, TimeOffRequest
