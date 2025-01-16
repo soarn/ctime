@@ -1,13 +1,9 @@
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages, jsonify
+from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user, login_required
-from sqlalchemy import desc
-from sqlalchemy.orm import aliased
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
-# from routes.api_v1 import
-from forms import AdminScheduleForm, ApproveRejectForm, LoginForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
-
+from forms import LoginForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
 # Blueprint Configuration
 web = Blueprint('web', __name__)
 

@@ -15,7 +15,7 @@ class RegisterForm(FlaskForm):
     first_name = StringField('First Name', validators=[DataRequired(), Length(max=50)])
     last_name  = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
     username   = StringField('Username', validators=[DataRequired(), Length(max=80)])
-    email      = EmailField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    email      = EmailField('Email', validators=[DataRequired(), Email(), Length(max=100)])
     password   = PasswordField('Password', validators=[DataRequired()])
     submit     = SubmitField('Register')
 
@@ -34,7 +34,15 @@ class WeeklyScheduleForm(FlaskForm):
     end_time = TimeField('End Time', validators=[Optional()])
     is_virtual = BooleanField('Virtual')
     is_unavailable = BooleanField('Unavailable')
-    # submit = SubmitField('Save Schedule')
+    
+    def validate(self):
+        if not super().validate():
+            return False
+        if self.start_time.data and self.end_time.data:
+            if self.start_time.data >= self.end_time.data:
+                self.end_time.errors.append('End time must be after start time')
+                return False
+        return True
 
 # DASHBOARD: REQUEST TIME OFF FORM
 class TimeOffRequestForm(FlaskForm):
@@ -45,13 +53,7 @@ class TimeOffRequestForm(FlaskForm):
 class ApproveRejectForm(FlaskForm):
     request_id = HiddenField('Request ID', validators=[DataRequired()])
     action = HiddenField('Action', validators=[DataRequired()])  # 'approve' or 'reject'
-    submit = SubmitField('Submit')
 
-# ADMIN: ADMIN SCHEDULE FORM
-# class AdminScheduleForm(FlaskForm):
-#     user_id = HiddenField('User ID', validators=[DataRequired()])
-#     schedules = HiddenField('Schedules', validators=[Optional()])  # JSON-encoded schedule data
-#     submit = SubmitField('Save Changes')
 class AdminWeeklyScheduleForm(FlaskForm):
     day_of_week = HiddenField("Day of Week", validators=[DataRequired()])
     start_time = TimeField("Start Time", validators=[Optional()])
