@@ -25,7 +25,6 @@ def login():
         password = form.password.data
         remember = form.remember.data
         user = User.query.filter_by(username=username).first()
-        user = User.query.filter_by(email=form.email.data).first()
 
         if user and user.check_password(password):
             # Update the last login time
@@ -77,19 +76,19 @@ def register():
         if existing_user:
             flash("Username already exists.", "danger")
         else:
-            # Check if this is the first user, if so, make them an admin
-            if User.query.count() == 0:
-                role = "admin"
-            else:
-                role = "user"
+            # # Check if this is the first user, if so, make them an admin
+            # if User.query.count() == 0:
+            #     role = "admin"
+            # else:
+            #     role = "user"
             
             # Create a new user
             new_user = User(
                 first_name=first_name,
                 last_name=last_name,
                 username=username,
-                email=email,
-                role=role
+                email=email#,
+                # role=role
             )
             new_user.set_password(password) # Hash the password
             db.session.add(new_user)
@@ -112,7 +111,7 @@ def dashboard():
 @web.route("/employee_dashboard", methods=["GET", "POST"])
 @login_required
 def employee_dashboard():
-    if current_user.role != "employee":
+    if current_user.role != "user":
         return redirect(url_for("web.login"))
 
     user_id = current_user.id
@@ -124,7 +123,7 @@ def employee_dashboard():
         db.session.add(time_off_request)
         db.session.commit()
         flash('Day off request submitted.', 'success')
-        return redirect(url_for('employee_dashboard'))
+        return redirect(url_for('web.employee_dashboard'))
     
     if request.method == "POST":
         # Overwrite existing schedules
@@ -145,7 +144,7 @@ def employee_dashboard():
         
         db.session.commit()
         flash('Schedule updated successfully.', 'success')
-        return redirect(url_for('employee_dashboard'))
+        return redirect(url_for('web.dashboard'))
     
     weekly_schedules = WeeklySchedule.query.filter_by(user_id=user_id).all()
     time_off_requests = TimeOffRequest.query.filter_by(user_id=user_id).all()
@@ -182,9 +181,9 @@ def admin_dashboard():
             time_off_request.status = 'rejected'
             flash('Time off request rejected.', 'success')
         db.session.commit()
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('web.admin_dashboard'))
     
-    users = User.query.filter_by(role='employee').all()
+    users = User.query.filter_by(role='user').all()
     # weekly_schedules = WeeklySchedule.query.filter(WeeklySchedule.user_id.in_([user.id for user in users])).all()
     # TODO: Thats weird lol
     weekly_schedules = WeeklySchedule.query.all()
@@ -198,3 +197,19 @@ def admin_dashboard():
         weekly_schedules=weekly_schedules,
         time_off_requests=time_off_requests
     )
+
+# REQUEST TIME OFF ROUTE
+@web.route('/time_off', methods=['POST'])
+@login_required
+def request_day_off():
+    if current_user.role != 'user':
+        return redirect(url_for('web.login'))
+    
+    user_id = current_user.id
+    time_off_form = TimeOffRequestForm()
+    if time_off_form.validate_on_submit():
+        time_off_request = TimeOffRequest(user_id=user_id, date=time_off_form.date.data)
+        db.session.add(time_off_request)
+        db.session.commit()
+        flash('Time off request submitted.', 'success')
+    return redirect(url_for('web.dashboard'))
