@@ -1,11 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% extends 'base.html' %}
+{% block title %}Employee Dashboard{% endblock %}
+{% block content %}
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Employee Dashboard</h1>
@@ -50,7 +45,7 @@
         </form>
 
         <h2 class="mt-4">Request Time Off</h2>
-        <form method="post" action="{{ url_for('request_day_off') }}">
+        <form method="post" action="{{ url_for('web.request_day_off') }}">
             <div class="mb-3">
                 <label for="date" class="form-label">Date</label>
                 <input type="date" class="form-control" id="date" name="date" required>
@@ -67,7 +62,7 @@
             {% endfor %}
         </ul>
 
-        <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">Logout</a>
+        <a href="{{ url_for('web.logout') }}" class="btn btn-danger mt-3">Logout</a>
     </div>
 </body>
-</html>
+{% endblock %}
