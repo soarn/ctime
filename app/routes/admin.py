@@ -31,7 +31,7 @@ def admin_dashboard():
     # Fetch users and schedules
     users = User.query.filter_by(role='user').all()
     # Only users have schedules, admins do not
-    weekly_schedules = WeeklySchedule.query.all()
+    weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
     time_off_requests = TimeOffRequest.query.all()
 
     user_schedule_mapping = {}
