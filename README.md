@@ -14,8 +14,15 @@
         3. Full schedule for company/team
 2. Admins:
     1. Create schedule/availability for users
+        1. Pagination on list/grid of users
     2. Approve/Reject days off
     3. Edit user profiles
     4. Dashboard
         1. Information on company/team
         2. Full schedule
+3. Security:
+    1. Add password confirmation field in RegisterForm class
+    2. Implement password strength validation (add Length, Regexp validators)
+    3. Add email verification mechanism
+    4. Implement rate limiting for registration endpoint
+    5. Add CAPTCHA or similar anti-automation measure
