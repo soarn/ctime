@@ -76,11 +76,11 @@ def register():
         if existing_user:
             flash("Username already exists.", "danger")
         else:
-            # # Check if this is the first user, if so, make them an admin
-            # if User.query.count() == 0:
-            #     role = "admin"
-            # else:
-            #     role = "user"
+            # Check if this is the first user, if so, make them an admin
+            if User.query.count() == 0:
+                role = "admin"
+            else:
+                role = "user"
             
             # Create a new user
             new_user = User(
@@ -103,7 +103,7 @@ def register():
 @login_required
 def dashboard():
     if current_user.role == "admin":
-        return redirect(url_for("web.admin_dashboard"))
+        return redirect(url_for("admin.admin_dashboard"))
     else:
         return redirect(url_for("web.employee_dashboard"))
 
@@ -115,101 +115,102 @@ def employee_dashboard():
         return redirect(url_for("web.login"))
 
     user_id = current_user.id
+
+    # Initialize forms for each day of the week
+    schedule_forms = {day: WeeklyScheduleForm(prefix=day) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
     time_off_form = TimeOffRequestForm()
-    schedule_forms = [WeeklyScheduleForm(prefix=f'day_{day}') for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']]
 
-    if time_off_form.validate_on_submit() and time_off_form.submit.data:
-        time_off_request = TimeOffRequest(user_id=user_id, date=time_off_form.date.data)
-        db.session.add(time_off_request)
-        db.session.commit()
-        flash('Day off request submitted.', 'success')
-        return redirect(url_for('web.employee_dashboard'))
-    
-    if request.method == "POST":
-        # Overwrite existing schedules
-        WeeklySchedule.query.filter_by(user_id=user_id).delete()
+    # Fetch existing schedules
+    existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
 
-        for schedule_form in schedule_forms:
-            if schedule_form.validate():
-                is_unavailable = schedule_form.is_unavailable.data
-                new_schedule = WeeklySchedule(
-                    user_id=user_id,
-                    day_of_week=schedule_form.day_of_week.data,
-                    start_time=schedule_form.start_time.data if not is_unavailable else None,
-                    end_time=schedule_form.end_time.data if not is_unavailable else None,
-                    is_virtual=schedule_form.is_virtual.data,
-                    is_unavailable=is_unavailable,
-                )
-                db.session.add(new_schedule)
-        
-        db.session.commit()
-        flash('Schedule updated successfully.', 'success')
-        return redirect(url_for('web.dashboard'))
-    
-    weekly_schedules = WeeklySchedule.query.filter_by(user_id=user_id).all()
+    # Populate forms with existing data
+    for day, form in schedule_forms.items():
+        form.day_of_week.data = day # Populate hidden field
+        if day in existing_schedules:
+            schedule = existing_schedules[day]
+            form.day_of_week.data = day
+            form.start_time.data = schedule.start_time
+            form.end_time.data = schedule.end_time
+            form.is_virtual.data = schedule.is_virtual
+            form.is_unavailable.data = schedule.is_unavailable
+        else:
+            form.day_of_week.data = day
+
     time_off_requests = TimeOffRequest.query.filter_by(user_id=user_id).all()
 
     return render_template(
-        'employee_dashboard.html',
+        "employee_dashboard.html",
         schedule_forms=schedule_forms,
         time_off_form=time_off_form,
-        weekly_schedules=weekly_schedules,
-        time_off_requests=time_off_requests
+        time_off_requests=time_off_requests,
     )
 
-# TODO: Might need to make a separate route for the forms because of how flask forms submit data
-
-# ADMIN DASHBOARD ROUTE
-@web.route("/admin_dashboard", methods=["GET", "POST"])
+# Update Schedule Route
+@web.route("/employee_dashboard/update_schedule", methods=["POST"])
 @login_required
-def admin_dashboard():
-    if current_user.role != "admin":
-        return redirect(url_for("web.login"))
-    
-    approve_reject_form = ApproveRejectForm()
-    admin_schedule_form = AdminScheduleForm()
+def update_schedule():
+    user_id = current_user.id
 
-    if approve_reject_form.validate_on_submit():
-        request_id = approve_reject_form.request_id.data
-        action = approve_reject_form.action.data
+    # Initialize forms for each day of the week
+    schedule_forms = {day: WeeklyScheduleForm(prefix=day) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
 
-        time_off_request = TimeOffRequest.query.get(request_id)
-        if action == 'approve':
-            time_off_request.status = 'approved'
-            flash('Time off request approved.', 'success')
-        elif action == 'reject':
-            time_off_request.status = 'rejected'
-            flash('Time off request rejected.', 'success')
-        db.session.commit()
-        return redirect(url_for('web.admin_dashboard'))
-    
-    users = User.query.filter_by(role='user').all()
-    # weekly_schedules = WeeklySchedule.query.filter(WeeklySchedule.user_id.in_([user.id for user in users])).all()
-    # TODO: Thats weird lol
-    weekly_schedules = WeeklySchedule.query.all()
-    time_off_requests = TimeOffRequest.query.all()
+    # Bind form data for each day
+    for day, form in schedule_forms.items():
+        form.day_of_week.data = day
+        form.process(formdata=request.form)
 
-    return render_template(
-        'admin_dashboard.html',
-        users=users,
-        approve_reject_form=approve_reject_form,
-        admin_schedule_form=admin_schedule_form,
-        weekly_schedules=weekly_schedules,
-        time_off_requests=time_off_requests
-    )
+    # Validate and update schedule
+    if all(form.validate() for form in schedule_forms.values()):
+        try: # Delete existing schedule
+            WeeklySchedule.query.filter_by(user_id=user_id).delete()
 
-# REQUEST TIME OFF ROUTE
-@web.route('/time_off', methods=['POST'])
+            # Add new schedules
+            for day, form in schedule_forms.items():
+                is_unavailable = form.is_unavailable.data
+                new_schedule = WeeklySchedule(
+                    user_id=user_id,
+                    day_of_week=day,
+                    start_time=form.start_time.data if not is_unavailable else None,
+                    end_time=form.end_time.data if not is_unavailable else None,
+                    is_virtual=form.is_virtual.data,
+                    is_unavailable=is_unavailable,
+                )
+                db.session.add(new_schedule)
+
+            db.session.commit()
+            flash("Schedule updated successfully.", "success")
+            return redirect(url_for("web.employee_dashboard"))
+        except Exception as e:
+            print(f"Error during schedule update: {e}")
+            flash("An error occurred while updating the schedule.", "danger")
+    else:
+        print("Form validation failed.")
+        for day, form in schedule_forms.items():
+            if not form.validate():
+                print(f"Validation errors for {day}: {form.errors}")
+        flash("Failed to update schedule. Please check the form and try again.", "danger")
+
+    return redirect(url_for("web.employee_dashboard"))
+
+# Request Time Off Route
+@web.route("/employee_dashboard/request_time_off", methods=["POST"])
 @login_required
-def request_day_off():
-    if current_user.role != 'user':
-        return redirect(url_for('web.login'))
-    
+def request_time_off():
     user_id = current_user.id
     time_off_form = TimeOffRequestForm()
+
     if time_off_form.validate_on_submit():
-        time_off_request = TimeOffRequest(user_id=user_id, date=time_off_form.date.data)
-        db.session.add(time_off_request)
-        db.session.commit()
-        flash('Time off request submitted.', 'success')
-    return redirect(url_for('web.dashboard'))
+        date = time_off_form.date.data
+        existing_request = TimeOffRequest.query.filter_by(user_id=user_id, date=date).first()
+        if existing_request:
+            flash("You have already requested time off for this date.", "warning")
+        else:
+            time_off_request = TimeOffRequest(user_id=user_id, date=date)
+            db.session.add(time_off_request)
+            db.session.commit()
+            flash("Time off request submitted.", "success")
+    else:
+        flash("Failed to submit time off request. Please try again.", "danger")
+
+    return redirect(url_for("web.employee_dashboard"))
+

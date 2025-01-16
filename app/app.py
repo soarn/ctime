@@ -7,6 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from db.db import db
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from routes.web import web
+from routes.admin import admin
 from flask_migrate import Migrate
 import os
 
@@ -38,6 +39,7 @@ def create_app():
 
     # Register Blueprints
     app.register_blueprint(web)
+    app.register_blueprint(admin)
 
     # Initialize Login Manager
     login_manager = LoginManager(app)

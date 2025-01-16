@@ -29,11 +29,12 @@ class RegisterForm(FlaskForm):
 
 # DASHBOARD: WEEKLY SCHEDULE FORM
 class WeeklyScheduleForm(FlaskForm):
-    day_of_week = StringField('Day of Week', validators=[DataRequired()])
+    day_of_week = HiddenField('Day of Week', validators=[DataRequired()])
     start_time = TimeField('Start Time', validators=[Optional()])
     end_time = TimeField('End Time', validators=[Optional()])
     is_virtual = BooleanField('Virtual')
     is_unavailable = BooleanField('Unavailable')
+    # submit = SubmitField('Save Schedule')
 
 # DASHBOARD: REQUEST TIME OFF FORM
 class TimeOffRequestForm(FlaskForm):
@@ -44,9 +45,17 @@ class TimeOffRequestForm(FlaskForm):
 class ApproveRejectForm(FlaskForm):
     request_id = HiddenField('Request ID', validators=[DataRequired()])
     action = HiddenField('Action', validators=[DataRequired()])  # 'approve' or 'reject'
+    submit = SubmitField('Submit')
 
 # ADMIN: ADMIN SCHEDULE FORM
-class AdminScheduleForm(FlaskForm):
-    user_id = HiddenField('User ID', validators=[DataRequired()])
-    schedules = HiddenField('Schedules', validators=[Optional()])  # JSON-encoded schedule data
-    submit = SubmitField('Save Changes')
+# class AdminScheduleForm(FlaskForm):
+#     user_id = HiddenField('User ID', validators=[DataRequired()])
+#     schedules = HiddenField('Schedules', validators=[Optional()])  # JSON-encoded schedule data
+#     submit = SubmitField('Save Changes')
+class AdminWeeklyScheduleForm(FlaskForm):
+    day_of_week = HiddenField("Day of Week", validators=[DataRequired()])
+    start_time = TimeField("Start Time", validators=[Optional()])
+    end_time = TimeField("End Time", validators=[Optional()])
+    is_virtual = BooleanField("Virtual")
+    is_unavailable = BooleanField("Unavailable")
+    submit = SubmitField("Save Schedule")

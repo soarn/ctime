@@ -6,7 +6,8 @@
         <h1 class="text-center">Employee Dashboard</h1>
 
         <h2 class="mt-4">Edit Your Weekly Schedule</h2>
-        <form method="post">
+        <form method="POST" action="{{ url_for('web.update_schedule') }}">
+            {{ schedule_forms['Monday'].csrf_token }}
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -18,25 +19,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+                    {% for day, form in schedule_forms.items() %}
+                    {{ form.hidden_tag() }}
                     <tr>
                         <td>{{ day }}</td>
-                        <td>
-                            <input type="time" name="start_time_{{ day }}" class="form-control"
-                                value="{% for schedule in weekly_schedules if schedule.day_of_week == day %}{{ schedule.start_time }}{% endfor %}">
-                        </td>
-                        <td>
-                            <input type="time" name="end_time_{{ day }}" class="form-control"
-                                value="{% for schedule in weekly_schedules if schedule.day_of_week == day %}{{ schedule.end_time }}{% endfor %}">
-                        </td>
-                        <td>
-                            <input type="checkbox" name="is_virtual_{{ day }}" class="form-check-input"
-                                {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_virtual %}checked{% endif %}{% endfor %}>
-                        </td>
-                        <td>
-                            <input type="checkbox" name="is_unavailable_{{ day }}" class="form-check-input"
-                                {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_unavailable %}checked{% endif %}{% endfor %}>
-                        </td>
+                        <td>{{ form.start_time(class_="form-control") }}</td>
+                        <td>{{ form.end_time(class_="form-control") }}</td>
+                        <td>{{ form.is_virtual(class_="form-check-input") }}</td>
+                        <td>{{ form.is_unavailable(class_="form-check-input") }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -45,12 +35,13 @@
         </form>
 
         <h2 class="mt-4">Request Time Off</h2>
-        <form method="post" action="{{ url_for('web.request_day_off') }}">
+        <form method="POST" action="{{ url_for('web.request_time_off') }}">
+            {{ time_off_form.hidden_tag() }}
             <div class="mb-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control" id="date" name="date" required>
+                {{ time_off_form.date.label(class_="form-label") }}
+                {{ time_off_form.date(class_="form-control") }}
             </div>
-            <button type="submit" class="btn btn-warning w-100">Request Day Off</button>
+            {{ time_off_form.submit(class_="btn btn-warning w-100") }}
         </form>
 
         <h2 class="mt-4">Your Time Off Requests</h2>
