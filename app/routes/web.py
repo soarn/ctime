@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, flash, url_for,
 from flask_login import current_user, login_user, logout_user, login_required
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
-from forms import LoginForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
+from forms import LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
 # Blueprint Configuration
 web = Blueprint('web', __name__)
 
@@ -207,3 +207,19 @@ def request_time_off():
 
     return redirect(url_for("web.employee_dashboard"))
 
+# Profile Route
+@web.route("/profile", methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = ProfileForm(obj=current_user)
+    if form.validate_on_submit():
+        current_user.first_name = form.first_name.data
+        current_user.last_name = form.last_name.data
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        if form.password.data:
+            current_user.set_password(form.password.data) # Hash and save the password
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('web.profile'))
+    return render_template('profile.html', form=form)

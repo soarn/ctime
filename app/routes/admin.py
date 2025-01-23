@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
-from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages, jsonify
+from flask import Blueprint, render_template, request, redirect, flash, url_for
 from flask_login import current_user, login_required
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
@@ -29,14 +29,19 @@ def admin_dashboard():
     
     # Initialize forms
     approve_reject_form = ApproveRejectForm()
-    schedule_forms = {}
 
     # Fetch users and schedules
     users = User.query.filter_by(role='user').all()
     # Only users have schedules, admins do not
     weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
-    time_off_requests = TimeOffRequest.query.all()
+    time_off_requests = TimeOffRequest.query.filter(TimeOffRequest.date >= datetime.today().date()).all() # Filter past dates
 
+    # Calculate the current week's dates (Sunday to Saturday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday() + 1) # Start on Sunday
+    week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
+
+    # Map schedules to users
     user_schedule_mapping = {}
     for user in users:
         user_schedule_mapping[user.id] = {}
@@ -54,6 +59,7 @@ def admin_dashboard():
         user_schedule_mapping=user_schedule_mapping,
         time_off_requests=time_off_requests,
         users=users,
+        week_dates=week_dates,
     )
 
 # ADMIN: HANDLE TIME OFF ROUTE
@@ -85,6 +91,7 @@ def handle_time_off():
             db.session.commit()
         except Exception as e:
             db.session.rollback()
+            logger.error(f"Error processing time-off request: {e}")
             flash('Error processing request.', 'error')
             return redirect(url_for('admin.admin_dashboard'))
     else:

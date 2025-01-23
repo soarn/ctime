@@ -4,12 +4,13 @@ from flask_login import LoginManager
 from flask_mysqldb import MySQL
 from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
+from flask_migrate import Migrate
+import os
 from db.db import db
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from routes.web import web
 from routes.admin import admin
-from flask_migrate import Migrate
-import os
+from utils import get_gravatar_url
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv('CONNECTION_STRING')
@@ -61,6 +62,9 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+    
+    # Register the Gravatar URL function as a global Jinja variable
+    app.jinja_env.globals.update(get_gravatar_url=get_gravatar_url)
     
     @app.route('/create_db')
     def create_db():

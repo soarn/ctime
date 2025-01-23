@@ -61,6 +61,7 @@ class ApproveRejectForm(FlaskForm):
     request_id = HiddenField('Request ID', validators=[DataRequired()])
     action = HiddenField('Action', validators=[DataRequired()])  # 'approve' or 'reject'
 
+# ADMIN: UPDATE SCHEDULE FORM
 class AdminWeeklyScheduleForm(FlaskForm):
     day_of_week = HiddenField("Day of Week", validators=[DataRequired()])
     start_time = TimeField("Start Time", validators=[Optional()])
@@ -68,3 +69,12 @@ class AdminWeeklyScheduleForm(FlaskForm):
     is_virtual = BooleanField("Virtual")
     is_unavailable = BooleanField("Unavailable")
     submit = SubmitField("Save Schedule")
+
+# PROFILE: UPDATE FORM
+class ProfileForm(FlaskForm):
+    first_name = StringField('First Name', validators=[DataRequired(), Length(max=50)])
+    last_name = StringField('Last Name', validators=[DataRequired(), Length(max=50)])
+    username = StringField('Username', validators=[DataRequired(), Length(max=80)])
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    password = PasswordField('Password (Optional)', validators=[Optional(), Length(min=8)])
+    submit = SubmitField('Save Changes')
