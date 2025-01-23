@@ -11,12 +11,22 @@ class User(UserMixin, db.Model):
     username      = db.Column(db.String   (80) , nullable    =False, unique=True                                    )
     email         = db.Column(db.String   (100), nullable    =False, unique=True                                    )
     password_hash = db.Column(db.String   (255), nullable    =False                                                 )
-    role          = db.Column(db.String   (10) , nullable    =False, default='user'                                 ) # 'employee' or 'admin'
+    role          = db.Column(db.String   (10) , nullable    =False, default='user'                                 ) # 'user' or 'admin'
     created_at    = db.Column(db.DateTime      , nullable    =False, default=datetime.utcnow                        )
     last_login    = db.Column(db.DateTime      , nullable    =True , default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Hash the password before storing it
     def set_password(self, password):
+        if len(password) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not any(c.isupper() for c in password):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.islower() for c in password):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not any(c.isdigit() for c in password):
+            raise ValueError("Password must contain at least one number")
+        if not any(c in "!@#$%^&*" for c in password):
+            raise ValueError("Password must contain at least one special character")
         self.password_hash = generate_password_hash(password)
     
     # Check the password against the stored hash
