@@ -103,32 +103,48 @@ def update_schedule(user_id):
         user = User.query.get_or_404(user_id)
         forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
 
-    # 
-    for day, form in forms.items():
-        form.day_of_week.data = day
-        try:
-            with db.session.begin():
-                # Delete existing schedule
-                WeeklySchedule.query.filter_by(user_id=user_id).delete()
+        # Populate forms with existing schedules
+        schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
+        for day, form in forms.items():
+            form.day_of_week.data = day
+            if day in schedules:
+                schedule = schedules[day]
+                form.start_time.data = schedule.start_time
+                form.end_time.data = schedule.end_time
+                form.is_virtual.data = schedule.is_virtual
+                form.is_unavailable.data = schedule.is_unavailable
 
-                # Add new schedules
-                for day, form in forms.items():
-                    is_unavailable = form.is_unavailable.data
-                    new_schedule = WeeklySchedule(
-                        user_id=user_id,
-                        day_of_week=day,
-                        start_time=form.start_time.data if not is_unavailable else None,
-                        end_time=form.end_time.data if not is_unavailable else None,
-                        is_virtual=form.is_virtual.data,
-                        is_unavailable=is_unavailable,
-                    )
-                    db.session.add(new_schedule)
-            flash(f"Schedule for user {user_id} updated successfully.", "success")
-        
+        return render_template("add_schedule.html", user=user, forms=forms)
+    
+    # POST request: Update schedules
+    forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+
+    # Bind form data and validate
+    for day, form in forms.items():
+        form.process(formdata=request.form)
+
+    if all(form.validate_on_submit() for form in forms.values()):
+        try:
+            # Delete existing schedules for the user
+            WeeklySchedule.query.filter_by(user_id=user_id).delete()
+
+            # Add new schedules
+            for day, form in forms.items():
+                is_unavailable = form.is_unavailable.data
+                new_schedule = WeeklySchedule(
+                    user_id=user_id,
+                    day_of_week=day,
+                    start_time=form.start_time.data if not is_unavailable else None,
+                    end_time=form.end_time.data if not is_unavailable else None,
+                    is_virtual=form.is_virtual.data,
+                    is_unavailable=is_unavailable,
+                )
+                db.session.add(new_schedule)
+            
             db.session.commit()
             flash(f"Schedule for user {user_id} updated successfully.", "success")
-            return redirect(url_for('admin.admin_dashboard'))
         except Exception as e:
+            db.session.rollback()
             logger.error(f"Error during schedule update: {e}")
             flash(f"An error occurred while updating the schedule for user {user_id}.", "danger")
     else:

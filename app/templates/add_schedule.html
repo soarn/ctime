@@ -1,47 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Schedule</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% extends "base.html" %}
+{% block title %}Add Schedule{% endblock %}
+{% block content %}
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Add Schedule</h1>
-        <form method="post" class="mt-4">
-            <div class="mb-3">
-                <label for="user_id" class="form-label">Employee</label>
-                <select id="user_id" name="user_id" class="form-select" required>
-                    {% for user in users %}
-                    <option value="{{ user.id }}">{{ user.name }}</option>
-                    {% endfor %}
-                </select>
+        <h1 class="text-center">Manage Schedule for {{ user.first_name }} {{ user.last_name }}</h1>
+        <form method="post" action="{{ url_for('admin.update_schedule', user_id=user.id) }}" class="mt-4">
+            {{ forms['Monday'].csrf_token }}
+
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Virtual</th>
+                            <th>Unavailable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day, form in forms.items() %}
+                        <tr>
+                            <td>
+                                {{ form.day_of_week(value=day) }}
+                                {{ day }}
+                            </td>
+                            <td>{{ form.start_time(class_="form-control") }}</td>
+                            <td>{{ form.end_time(class_="form-control") }}</td>
+                            <td>{{ form.is_virtual(class_="form-check-input") }}</td>
+                            <td>{{ form.is_unavailable(class_="form-check-input") }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Days of the Week</label><br>
-                {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-                <div class="form-check form-check-inline">
-                    <input type="checkbox" class="form-check-input" name="days_of_week" value="{{ day }}" id="{{ day }}">
-                    <label class="form-check-label" for="{{ day }}">{{ day }}</label>
-                </div>
-                {% endfor %}
-            </div>            
-            <div class="mb-3">
-                <label for="start_time" class="form-label">Start Time</label>
-                <input type="time" id="start_time" name="start_time" class="form-control" required>
-            </div>
-            <div class="mb-3">
-                <label for="end_time" class="form-label">End Time</label>
-                <input type="time" id="end_time" name="end_time" class="form-control" required>
-            </div>
-            <div class="form-check mb-3">
-                <input type="checkbox" id="is_virtual" name="is_virtual" class="form-check-input">
-                <label for="is_virtual" class="form-check-label">Virtual Work</label>
-            </div>
-            <button type="submit" class="btn btn-success w-100">Add Schedule</button>
+
+            <button type="submit" class="btn btn-success w-100">Save Schedule</button>
         </form>
-        <a href="{{ url_for('web.admin_dashboard') }}" class="btn btn-secondary w-100 mt-3">Back to Dashboard</a>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary w-100 mt-3">Back to Dashboard</a>
     </div>
 </body>
-</html>
+{% endblock %}
