@@ -1,26 +1,38 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
+<head>
     <meta charset="UTF-8" />
     <meta name-="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %} ctime Scheduler {% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://unpkg.com/feather-icons"></script>
-    <head>
-        <div id="flash-messages" class="position-fixed top-0 start-50 translate-middle-x mt-3">
+    <script src="https://unpkg.com/feather-icons@4.29.1/dist/feather.min.js" 
+            integrity="sha384-uO3SXW5IuS1ZpFPKugNNWqTZRRglnUJK6UAZ/gxOX80nxEkN9NcGZTftn6RzhGWE"
+            crossorigin="anonymous"></script>
+        </head>
+        <body>
+          <div id="flash-messages" class="position-fixed top-0 start-50 translate-middle-x mt-3">
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
-                <div class="container">
-                  {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                      {{ message }}
-                    </div>
-                  {% endfor %}
+              <div class="container">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+                {% endfor %}
+              </div>
               {% endif %}
             {% endwith %}
-          </div>
-    </head>
-    <body>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+                integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+                crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"
+                integrity="sha384-ZXU6Sn0TxJMqnCKoxHx7cGkXhL3lGvBUeWxh9jU2e6IcwqIypKieEXvLKgFL+BC4"
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"
+                integrity="sha384-V4z9rz5P5mHJ9vGqp4VvL0ac5qO9/3vEGwEElyL3NMzYqwDa/1jCrM4jqW6YfZJ"
+                crossorigin="anonymous"></script>
         <div class="container mt-4">{% block content %}{% endblock %}</div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

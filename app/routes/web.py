@@ -73,18 +73,15 @@ def register():
             flash("Username already exists.", "danger")
         else:
             # Check if this is the first user, if so, make them an admin
-            if User.query.count() == 0:
-                role = "admin"
-            else:
-                role = "user"
+            role = "admin" if User.query.count() == 0 else "user"
             
             # Create a new user
             new_user = User(
                 first_name=first_name,
                 last_name=last_name,
                 username=username,
-                email=email#,
-                # role=role
+                email=email,
+                role=role
             )
             new_user.set_password(password) # Hash the password
             db.session.add(new_user)

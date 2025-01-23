@@ -5,11 +5,14 @@ from flask_login import current_user, login_required
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import AdminWeeklyScheduleForm, ApproveRejectForm
+import logging  
+
+logger = logging.getLogger(__name__) 
 
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.role != 'admin':
+        if not current_user.is_authenticated or current_user.role != 'admin':
             flash("Unauthorized", "danger")
             return redirect(url_for('web.dashboard'))
         return f(*args, **kwargs)
@@ -61,7 +64,7 @@ def handle_time_off():
 
     approve_reject_form = ApproveRejectForm()
 
-    print(f"Request ID: {approve_reject_form.request_id}, Action: {approve_reject_form.action}")
+    logger.debug(f"Processing time-off request ID: {approve_reject_form.request_id.data}, Action: {approve_reject_form.action.data}")
     if approve_reject_form.validate_on_submit():
         request_id = approve_reject_form.request_id.data
         action = approve_reject_form.action.data
@@ -85,9 +88,9 @@ def handle_time_off():
             flash('Error processing request.', 'error')
             return redirect(url_for('admin.admin_dashboard'))
     else:
-        print("Form validation failed.")
+        logger.error("Form validation failed.")
         for field, errors in approve_reject_form.errors.items():
-            print(f"Validation errors for {field}: {errors}")
+            logger.error(f"Validation errors for {field}: {errors}")
             flash(f"Validation errors for {field}: {errors}", "danger")
         return redirect(url_for('admin.admin_dashboard'))
 
@@ -103,36 +106,36 @@ def update_schedule(user_id):
     # 
     for day, form in forms.items():
         form.day_of_week.data = day
-        form.process(formdata=request.form)
+        try:
+            with db.session.begin():
+                # Delete existing schedule
+                WeeklySchedule.query.filter_by(user_id=user_id).delete()
 
-    if all(form.validate() for form in forms.values()):
-        try: # Delete existing schedule
-            WeeklySchedule.query.filter_by(user_id=user_id).delete()
-
-            # Add new schedules
-            for day, form in forms.items():
-                is_unavailable = form.is_unavailable.data
-                new_schedule = WeeklySchedule(
-                    user_id=user_id,
-                    day_of_week=day,
-                    start_time=form.start_time.data if not is_unavailable else None,
-                    end_time=form.end_time.data if not is_unavailable else None,
-                    is_virtual=form.is_virtual.data,
-                    is_unavailable=is_unavailable,
-                )
-                db.session.add(new_schedule)
+                # Add new schedules
+                for day, form in forms.items():
+                    is_unavailable = form.is_unavailable.data
+                    new_schedule = WeeklySchedule(
+                        user_id=user_id,
+                        day_of_week=day,
+                        start_time=form.start_time.data if not is_unavailable else None,
+                        end_time=form.end_time.data if not is_unavailable else None,
+                        is_virtual=form.is_virtual.data,
+                        is_unavailable=is_unavailable,
+                    )
+                    db.session.add(new_schedule)
+            flash(f"Schedule for user {user_id} updated successfully.", "success")
         
             db.session.commit()
             flash(f"Schedule for user {user_id} updated successfully.", "success")
             return redirect(url_for('admin.admin_dashboard'))
         except Exception as e:
-            print(f"Error during schedule update: {e}")
+            logger.error(f"Error during schedule update: {e}")
             flash(f"An error occurred while updating the schedule for user {user_id}.", "danger")
     else:
-        print("Form validation failed.")
+        logger.error("Schedule form validation failed.")
         for day, form in forms.items():
             if not form.validate():
-                print(f"Validation errors for {day}: {form.errors}")
+                logger.error(f"Schedule validation errors for {day}: {form.errors}")
                 flash(f"Validation errors for {day}: {form.errors}", "danger")
     
     return redirect(url_for('admin.admin_dashboard'))
