@@ -9,6 +9,7 @@ from db.db import db
 from db.db_models import User
 from routes.web import web
 from routes.admin import admin
+from routes.globals import globals
 from utils import get_gravatar_url
 
 class Config:
@@ -61,6 +62,7 @@ def create_app():
     migrate = Migrate(app, db)
 
     # Register Blueprints
+    app.register_blueprint(globals)
     app.register_blueprint(web)
     app.register_blueprint(admin)
 
