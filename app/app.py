@@ -17,7 +17,7 @@ class Config:
         required_vars = ['CONNECTION_STRING', 'SECRET_KEY']
         missing = [var for var in required_vars if not os.getenv(var)]
         if missing:
-            raise ValueError(f"Missing required environemnt variables: {', '.join(missing)}")
+            raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
 
     SQLALCHEMY_DATABASE_URI = os.getenv('CONNECTION_STRING')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -77,11 +77,6 @@ def create_app():
     
     # Register the Gravatar URL function as a global Jinja variable
     app.jinja_env.globals.update(get_gravatar_url=get_gravatar_url)
-    
-    @app.route('/create_db')
-    def create_db():
-        db.create_all()
-        return 'Database created'
     
     return app
 

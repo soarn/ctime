@@ -221,13 +221,13 @@ def request_time_off():
 def profile():
     form = ProfileForm(obj=current_user)
     if form.validate_on_submit():
-        # Check if username is taken by another user
+        # Check if username or email is taken by another user
         existing_user = User.query.filter(
-            User.username == form.username.data,
+            (User.username == form.username.data) | (User.email == form.email.data),
             User.id != current_user.id
         ).first()
         if existing_user:
-            flash('Username is already taken.', 'danger')
+            flash('Username or email is already taken.', 'danger')
             return redirect(url_for('web.profile'))
         current_user.first_name = form.first_name.data
         current_user.last_name = form.last_name.data

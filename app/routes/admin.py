@@ -170,3 +170,13 @@ def update_schedule(user_id):
 def add_schedule(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("add_schedule.html", user=user)
+
+
+# ADMIN: MANUAL ROUTE: CREATE DB
+@admin.route("/admin/create_db")
+@login_required
+@admin_required
+def create_db():
+    db.create_all()
+    return "Database Created!"
+    
