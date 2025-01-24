@@ -38,7 +38,7 @@ def admin_dashboard():
 
     # Calculate the current week's dates (Sunday to Saturday)
     today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday() + 1) # Start on Sunday
+    start_of_week = today - timedelta(days=today.weekday()) # Start on Sunday
     week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
 
     # Map schedules to users

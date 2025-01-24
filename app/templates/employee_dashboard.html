@@ -8,29 +8,31 @@
         <h2 class="mt-4">Edit Your Weekly Schedule</h2>
         <form method="POST" action="{{ url_for('web.update_schedule') }}">
             {{ schedule_forms['Monday'].csrf_token }}
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Virtual</th>
-                        <th>Unavailable</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for day, form in schedule_forms.items() %}
-                    {{ form.hidden_tag() }}
-                    <tr>
-                        <td>{{ day }}</td>
-                        <td>{{ form.start_time(class_="form-control") }}</td>
-                        <td>{{ form.end_time(class_="form-control") }}</td>
-                        <td>{{ form.is_virtual(class_="form-check-input") }}</td>
-                        <td>{{ form.is_unavailable(class_="form-check-input") }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Virtual</th>
+                            <th>Unavailable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day, form in schedule_forms.items() %}
+                        {{ form.hidden_tag() }}
+                        <tr>
+                            <td>{{ day }}</td>
+                            <td>{{ form.start_time(class_="form-control") }}</td>
+                            <td>{{ form.end_time(class_="form-control") }}</td>
+                            <td>{{ form.is_virtual(class_="form-check-input") }}</td>
+                            <td>{{ form.is_unavailable(class_="form-check-input") }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
         </form>
 
