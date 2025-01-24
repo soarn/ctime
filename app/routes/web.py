@@ -1,11 +1,18 @@
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user, login_required
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
 # Blueprint Configuration
 web = Blueprint('web', __name__)
+
+limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"]
+        )
 
 # HOME ROUTE
 @web.route("/")
@@ -14,6 +21,7 @@ def home():
 
 # LOGIN ROUTE
 @web.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def login():
     form = LoginForm()
     if form.validate_on_submit():
@@ -213,6 +221,14 @@ def request_time_off():
 def profile():
     form = ProfileForm(obj=current_user)
     if form.validate_on_submit():
+        # Check if username is taken by another user
+        existing_user = User.query.filter(
+            User.username == form.username.data,
+            User.id != current_user.id
+        ).first()
+        if existing_user:
+            flash('Username is already taken.', 'danger')
+            return redirect(url_for('web.profile'))
         current_user.first_name = form.first_name.data
         current_user.last_name = form.last_name.data
         current_user.username = form.username.data

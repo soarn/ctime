@@ -1,18 +1,24 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 from flask import Flask
 from flask_login import LoginManager
-from flask_mysqldb import MySQL
 from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 import os
 from db.db import db
-from db.db_models import User, WeeklySchedule, TimeOffRequest
+from db.db_models import User
 from routes.web import web
 from routes.admin import admin
 from utils import get_gravatar_url
 
 class Config:
+    @classmethod
+    def validate_config(cls):
+        required_vars = ['CONNECTION_STRING', 'SECRET_KEY']
+        missing = [var for var in required_vars if not os.getenv(var)]
+        if missing:
+            raise ValueError(f"Missing required environemnt variables: {', '.join(missing)}")
+
     SQLALCHEMY_DATABASE_URI = os.getenv('CONNECTION_STRING')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY')
@@ -22,6 +28,12 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
+
+    @classmethod
+    def validate_config(cls):
+        super().validate_config()
+        if os.getenv('FLASK_ENV') == 'production' and not os.getenv('CONNECTION_STRING', '').startswith('mysql+ssl://'):
+            raise ValueError("Production environment requires SSL database connection")
 
 def create_app():
 
