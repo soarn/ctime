@@ -13,6 +13,7 @@
                     <tr>
                         <th>Employee</th>
                         <th>Date</th>
+                        <th>Comment</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -22,20 +23,36 @@
                     <tr>
                         <td>{{ request.user.first_name }} {{ request.user.last_name}}</td>
                         <td>{{ request.date }}</td>
-                        <td>{{ request.status }}</td>
-                        <td>
-                            <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                {{ approve_reject_form.csrf_token }}
-                                {{ approve_reject_form.request_id(value=request.id) }}
-                                {{ approve_reject_form.action(value='approve') }}
-                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
-                            </form>
-                            <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                {{ approve_reject_form.csrf_token }}
-                                {{ approve_reject_form.request_id(value=request.id) }}
-                                {{ approve_reject_form.action(value='reject') }}
-                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-                            </form>
+                        <td>{{ request.comment or "No comment provided" }}</td>
+                        <td class="text-center align-middle">
+                            {% if request.status == 'pending' %}
+                            <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif request.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center align-middle">
+                            <div class="d-flex flex-column gap-2">
+                                <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
+                                    {{ approve_reject_form.csrf_token }}
+                                    {{ approve_reject_form.request_id(value=request.id) }}
+                                    {{ approve_reject_form.action(value='approve') }}
+                                    <!-- <button type="submit" class="btn btn-success btn-sm">Approve</button> -->
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="bi bi-check-circle me-1"></i> Approve
+                                    </button>
+                                </form>
+                                <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
+                                    {{ approve_reject_form.csrf_token }}
+                                    {{ approve_reject_form.request_id(value=request.id) }}
+                                    {{ approve_reject_form.action(value='reject') }}
+                                    <!-- <button type="submit" class="btn btn-danger btn-sm">Reject</button> -->
+                                    <button type="submit" class="btn btn-danger btn-sm w-100">
+                                        <i class="bi bi-x-circle me-1"></i> Reject
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

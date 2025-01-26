@@ -5,7 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
-from forms import LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
+from forms import CancelTimeOffForm, LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
 import logging  
 
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ def employee_dashboard():
     # Initialize forms for each day of the week
     schedule_forms = {day: WeeklyScheduleForm(prefix=day) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
     time_off_form = TimeOffRequestForm()
+    cancel_time_off_form = CancelTimeOffForm()
 
     # Fetch existing schedules
     existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
@@ -148,6 +149,7 @@ def employee_dashboard():
         schedule_forms=schedule_forms,
         time_off_form=time_off_form,
         time_off_requests=time_off_requests,
+        cancel_time_off_form=cancel_time_off_form
     )
 
 # Update Schedule Route
@@ -206,16 +208,36 @@ def request_time_off():
 
     if time_off_form.validate_on_submit():
         date = time_off_form.date.data
+        comment = time_off_form.comment.data
         existing_request = TimeOffRequest.query.filter_by(user_id=user_id, date=date).first()
         if existing_request:
             flash("You have already requested time off for this date.", "warning")
         else:
-            time_off_request = TimeOffRequest(user_id=user_id, date=date)
+            time_off_request = TimeOffRequest(user_id=user_id, date=date, comment=comment)
             db.session.add(time_off_request)
             db.session.commit()
             flash("Time off request submitted.", "success")
     else:
         flash("Failed to submit time off request. Please try again.", "danger")
+
+    return redirect(url_for("web.employee_dashboard"))
+
+# Cancel Time Off Route
+@web.route("/employee_dashboard/cancel_time_off", methods=["POST"])
+@login_required
+def cancel_time_off():
+    user_id = current_user.id
+    request_id = request.form.get("request_id")
+    time_off_request = TimeOffRequest.query.filter_by(id=request_id, user_id=user_id).first()
+    if time_off_request.status != "pending":
+        flash("Cannot cancel a time off request that has already been approved or rejected.", "danger")
+        return redirect(url_for("web.employee_dashboard"))
+    if time_off_request:
+        db.session.delete(time_off_request)
+        db.session.commit()
+        flash("Time off request cancelled.", "success")
+    else:
+        flash("Failed to cancel time off request.", "danger")
 
     return redirect(url_for("web.employee_dashboard"))
 
