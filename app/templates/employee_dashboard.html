@@ -81,12 +81,10 @@
                                 <form method="POST" action="{{ url_for('web.cancel_time_off') }}" class="d-inline">
                                     {{ cancel_time_off_form.csrf_token }}
                                     {{ cancel_time_off_form.request_id(value=request.id) }}
-                                    <!-- <button type="submit" class="btn btn-danger btn-sm">Cancel</button> -->
                                     <button type="submit" class="btn btn-danger btn-sm w-100">
                                         <i class="bi bi-x-circle me-1"></i> Cancel
                                 </form>
                                 {% else %}
-                                <!-- <button type="submit" class="btn btn-secondary btn-sm" disabled>Cancel</button> -->
                                 <button type="submit" class="btn btn-secondary btn-sm w-100" disabled>
                                     <i class="bi bi-x-circle me-1"></i> Cancel
                                 {% endif %}
