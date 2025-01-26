@@ -93,7 +93,7 @@ def handle_time_off():
             db.session.rollback()
             logger.error(f"Error processing time-off request: {e}")
             flash('Error processing request.', 'error')
-            return redirect(url_for('admin.admin_dashboard'))
+        return redirect(url_for('admin.admin_dashboard'))
     else:
         logger.error("Form validation failed.")
         for field, errors in approve_reject_form.errors.items():

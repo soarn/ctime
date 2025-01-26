@@ -60,6 +60,7 @@ class TimeOffRequestForm(FlaskForm):
 class ApproveRejectForm(FlaskForm):
     request_id = HiddenField('Request ID', validators=[DataRequired()])
     action = HiddenField('Action', validators=[DataRequired()])  # 'approve' or 'reject'
+    submit = SubmitField('Submit')
 
 # ADMIN: UPDATE SCHEDULE FORM
 class AdminWeeklyScheduleForm(FlaskForm):

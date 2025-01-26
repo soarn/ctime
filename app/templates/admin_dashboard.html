@@ -25,15 +25,15 @@
                         <td>{{ request.status }}</td>
                         <td>
                             <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                {{ approve_reject_form.hidden_tag() }}
-                                <input type="hidden" name="request_id" value="{{ request.id }}">
-                                <input type="hidden" name="action" value="approve">
+                                {{ approve_reject_form.csrf_token }}
+                                {{ approve_reject_form.request_id(value=request.id) }}
+                                {{ approve_reject_form.action(value='approve') }}
                                 <button type="submit" class="btn btn-success btn-sm">Approve</button>
                             </form>
                             <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                {{ approve_reject_form.hidden_tag() }}
-                                <input type="hidden" name="request_id" value="{{ request.id }}">
-                                <input type="hidden" name="action" value="reject">
+                                {{ approve_reject_form.csrf_token }}
+                                {{ approve_reject_form.request_id(value=request.id) }}
+                                {{ approve_reject_form.action(value='reject') }}
                                 <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                             </form>
                         </td>
