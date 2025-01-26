@@ -6,6 +6,10 @@ from flask_limiter.util import get_remote_address
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
+import logging  
+
+logger = logging.getLogger(__name__)
+
 # Blueprint Configuration
 web = Blueprint('web', __name__)
 
@@ -182,13 +186,13 @@ def update_schedule():
             flash("Schedule updated successfully.", "success")
             return redirect(url_for("web.employee_dashboard"))
         except Exception as e:
-            print(f"Error during schedule update: {e}")
+            logger.error(f"Error during schedule update: {e}")
             flash("An error occurred while updating the schedule.", "danger")
     else:
-        print("Form validation failed.")
+        logger.error("Form validation failed.")
         for day, form in schedule_forms.items():
             if not form.validate():
-                print(f"Validation errors for {day}: {form.errors}")
+                logger.error(f"Validation errors for {day}: {form.errors}")
         flash("Failed to update schedule. Please check the form and try again.", "danger")
 
     return redirect(url_for("web.employee_dashboard"))

@@ -7,7 +7,7 @@ from db.db import db
 from forms import AdminWeeklyScheduleForm, ApproveRejectForm
 import logging  
 
-logger = logging.getLogger(__name__) 
+logger = logging.getLogger(__name__)
 
 def admin_required(f):
     @wraps(f)
@@ -36,9 +36,9 @@ def admin_dashboard():
     weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
     time_off_requests = TimeOffRequest.query.filter(TimeOffRequest.date >= datetime.today().date()).all() # Filter past dates
 
-    # Calculate the current week's dates (Sunday to Saturday)
+    # Calculate the current week's dates (Monday to Sunday)
     today = datetime.today()
-    start_of_week = today - timedelta(days=today.weekday()) # Start on Sunday
+    start_of_week = today - timedelta(days=today.weekday()) # Start on Monday
     week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
 
     # Map schedules to users
