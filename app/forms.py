@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import DateField, StringField, IntegerField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, FloatField, SelectField, TimeField
+from wtforms import DateField, StringField, IntegerField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, FloatField, SelectField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, NumberRange, Email, Length, Optional, Regexp
 
 
@@ -26,15 +26,7 @@ class RegisterForm(FlaskForm):
     ])
     submit     = SubmitField('Register')
 
-# # PROFILE: UPDATE FORM
-# class UpdateProfileForm(FlaskForm):
-#     first_name = StringField('First Name', validators=[DataRequired(), Length(max=50)]          )
-#     last_name  = StringField('Last Name' , validators=[DataRequired(), Length(max=50)]          )
-#     email      = StringField('Email'     , validators=[DataRequired(), Email(), Length(max=120)])
-#     password   = PasswordField('Password', validators=[Optional(), Length(min=8, max=80)]       )
-#     submit     = SubmitField('Update'                                                           )
-
-# DASHBOARD: WEEKLY SCHEDULE FORM
+# WEB: WEEKLY SCHEDULE FORM
 class WeeklyScheduleForm(FlaskForm):
     day_of_week = HiddenField('Day of Week', validators=[DataRequired()])
     start_time = TimeField('Start Time', validators=[Optional()])
@@ -51,10 +43,16 @@ class WeeklyScheduleForm(FlaskForm):
                 return False
         return True
 
-# DASHBOARD: REQUEST TIME OFF FORM
+# WEB: REQUEST TIME OFF FORM
 class TimeOffRequestForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
+    comment = TextAreaField('Comment', render_kw={"placeholder": "Enter a reason for your request (optional)"}, validators=[Optional(), Length(max=255)])
     submit = SubmitField('Request Day Off')
+
+# WEB: CANCEL TIME OFF FORM
+class CancelTimeOffForm(FlaskForm):
+    request_id = HiddenField('Request ID', validators=[DataRequired()])
+    submit = SubmitField('Cancel Request')
 
 # ADMIN: APPROVE/REJECT TIME OFF FORM
 class ApproveRejectForm(FlaskForm):

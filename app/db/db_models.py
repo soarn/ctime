@@ -49,3 +49,4 @@ class TimeOffRequest(db.Model):
     user = db.relationship('User', backref=db.backref('time_off_requests', lazy=True))
     date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(10), default='pending')  # 'pending', 'approved', 'rejected'
+    comment = db.Column(db.Text(255), nullable=True)
