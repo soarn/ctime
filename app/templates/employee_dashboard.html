@@ -6,6 +6,16 @@
         <h1 class="text-center">Employee Dashboard</h1>
 
         <h2 class="mt-4">Edit Your Weekly Schedule</h2>
+        <div class="mb-3">
+            <label for="scheduleTemplate" class="form-label">Load a Template:</label>
+            <select id="scheduleTemplate" class="form-select" onchange="loadTemplate(this.value)">
+                <option value="">Select a Template</option>
+                <option value="fulltime">Full Time (9:00 AM - 5:00 PM)</option>
+                <option value="parttime">Part Time</option>
+                <option value="weekend">Weekend</option>
+                <option value="custom1">Custom Template 1</option>
+            </select>
+        </div>
         <form method="POST" action="{{ url_for('web.update_schedule') }}">
             {{ schedule_forms['Monday'].csrf_token }}
             <div class="table-responsive">
@@ -15,25 +25,70 @@
                             <th>Day</th>
                             <th>Start Time</th>
                             <th>End Time</th>
-                            <th>Virtual</th>
-                            <th>Unavailable</th>
+                            <th>Availability</th>
+                            <!-- <th>Virtual</th>
+                            <th>Unavailable</th> -->
                         </tr>
                     </thead>
                     <tbody>
                         {% for day, form in schedule_forms.items() %}
                         {{ form.hidden_tag() }}
                         <tr>
-                            <td>{{ day }}</td>
-                            <td>{{ form.start_time(class_="form-control") }}</td>
-                            <td>{{ form.end_time(class_="form-control") }}</td>
-                            <td>{{ form.is_virtual(class_="form-check-input") }}</td>
-                            <td>{{ form.is_unavailable(class_="form-check-input") }}</td>
+                            <td>
+                                {{ day }}
+                                {% if day in ['Saturday', 'Sunday'] %}
+                                <span class="badge bg-secondary">Weekend</span>
+                                {% else %}
+                                <span class="badge bg-primary">Weekday</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                    {{ form.start_time(class_="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {{ form.start_time.errors | join(', ') }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                    {{ form.end_time(class_="form-control is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        End time is required.
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+
+                                <div class="form-check form-switch">
+                                    {{ form.is_virtual(class_="form-check-input") }}
+                                    <label class="form-check-label">Virtual</label>
+                                </div>
+                                <div class="form-check form-switch">
+                                    {{ form.is_unavailable(class_="form-check-input") }}
+                                    <label class="form-check-label">Unavailable</label>
+                                </div>
+                            </td>
+                            <!-- <td>
+                                {{ form.is_virtual(class_="form-check-input") }}
+                                {% if form.is_virtual.data %}
+                                <i class="bi bi-laptop" style="color: var(--bs-info)"></i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    {{ form.is_unavailable(class_="form-check-input") }}
+                                    <label class="form-check-label">Unavailable</label>
+                                </div>
+                            </td> -->
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
+            <button type="submit" class="btn btn-primary w-100" id="saveScheduleButton">Save Schedule</button>
         </form>
 
         <h2 class="mt-4">Request Time Off</h2>
@@ -97,4 +152,70 @@
         </div>
     </div>
 </body>
+
+<script>
+    function loadTemplate(template) {
+        const schedule = {
+            fulltime: {
+                Monday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Tuesday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Wednesday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Thursday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Friday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            },
+            parttime: {
+                Monday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Tuesday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Wednesday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Thursday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Friday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            },
+            weekend: {
+                Monday: { start: "", end: "", virtual: false, unavailable: true },
+                Tuesday: { start: "", end: "", virtual: false, unavailable: true },
+                Wednesday: { start: "", end: "", virtual: false, unavailable: true },
+                Thursday: { start: "", end: "", virtual: false, unavailable: true },
+                Friday: { start: "", end: "", virtual: false, unavailable: true },
+                Saturday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Sunday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+            },
+            custom1: {
+                Monday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Tuesday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Wednesday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Thursday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Friday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            }
+    };
+
+    if (schedule[template]) {
+        for (const [day, times] of Object.entries(schedule[template])) {
+            const startTimeInput = document.getElementById(`${day}-start_time`);
+            const endTimeInput = document.getElementById(`${day}-end_time`);
+            const isVirtualInput = document.getElementById(`${day}-is_virtual`);
+            const isUnavailableInput = document.getElementById(`${day}-is_unavailable`);
+
+            if (startTimeInput) startTimeInput.value = times.start;
+            if (endTimeInput) endTimeInput.value = times.end;
+            if (isVirtualInput) isVirtualInput.checked = times.virtual;
+            if (isUnavailableInput) isUnavailableInput.checked = times.unavailable;
+        }
+    }
+}
+
+// Confetti on schedule save
+document.getElementById("saveScheduleButton").addEventListener("click", function() {
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
+});
+</script>
 {% endblock %}
