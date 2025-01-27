@@ -26,3 +26,7 @@
     3. Add email verification mechanism
     4. Implement rate limiting for registration endpoint
     5. Add CAPTCHA or similar anti-automation measure
+4. Modularity:
+    1. Add environment variables for different operating modes
+        1. Auto-approve time off
+    2. Deploy as Docker container
