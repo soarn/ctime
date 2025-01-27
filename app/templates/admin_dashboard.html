@@ -1,137 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Admin Dashboard</h1>
 
-        <!-- Time Off Requests Section -->
-        <h2 class="mt-4">Time Off Requests</h2>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Date</th>
-                        <th>Comment</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for request in time_off_requests %}
-                    <tr>
-                        <td>{{ request.user.first_name }} {{ request.user.last_name}}</td>
-                        <td>{{ request.date }}</td>
-                        <td>{{ request.comment or "<i>No comment provided</i>"|safe }}</td>
-                        <td class="text-center align-middle">
-                            {% if request.status == 'pending' %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                            {% elif request.status == 'approved' %}
-                            <span class="badge bg-success">Approved</span>
-                            {% else %}
-                            <span class="badge bg-danger">Rejected</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex flex-column gap-2">
-                                <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                    {{ approve_reject_form.csrf_token }}
-                                    {{ approve_reject_form.request_id(value=request.id) }}
-                                    {{ approve_reject_form.action(value='approve') }}
-                                    <button type="submit" class="btn btn-success btn-sm w-100">
-                                        <i class="bi bi-check-circle me-1"></i> Approve
-                                    </button>
-                                </form>
-                                <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
-                                    {{ approve_reject_form.csrf_token }}
-                                    {{ approve_reject_form.request_id(value=request.id) }}
-                                    {{ approve_reject_form.action(value='reject') }}
-                                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                                        <i class="bi bi-x-circle me-1"></i> Reject
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+        {% include 'admin_dashboard-time_off.html' %}
 
-        <!-- Employees Grid/List Section -->
-        <h2 class="mt-4">Employees</h2>
-        <button class="btn btn-secondary mb-3" onclick="toggleView()" alt="Toggle View" title="Toggle View" type="button">
-            <i class="bi bi-layout-sidebar"></i>
-        </button>
+        {% include 'admin_dashboard-list_users.html' %}
 
-        <!-- Grid View -->
-        <div id="user-grid" class="row">
-            {% for user in users %}
-            <div class="col-md-3">
-                <div class="card mb-4">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">{{ user.first_name }} {{ user.last_name}}</h5>
-                        <a href="{{ url_for('admin.update_schedule', user_id=user.id) }}" class="btn btn-primary">Manage Schedule</a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+        {% include 'admin_dashboard-schedule_overview.html' %}
 
-        <!-- List View -->
-        <div id="user-list" class="d-none">
-            <ul class="list-group">
-                {% for user in users %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ user.first_name }} {{ user.last_name}}
-                    <a href="{{ url_for('admin.add_schedule', user_id=user.id) }}" class="btn btn-primary btn-sm">Manage Schedule</a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Weekly Schedule Table -->
-        <h2 class="mt-4">Weekly Schedule Overview</h2>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        {% for day_date in week_dates %}
-                        <th>{{ day_date.strftime('%A') }}<br>{{ day_date.strftime('%b %d') }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.first_name }} {{ user.last_name }}</td>
-                        {% for day_name, day_data in user_schedule_mapping[user.id].items() %}
-                        <td>
-                            {% if day_data.has_time_off %}
-                            <span class="badge bg-warning text-dark">Day Off</span>
-                            {% elif day_data.schedule %}
-                                {% if day_data.schedule.is_unavailable %}<span class="badge bg-danger">Unavailable</span>
-                                {% elif day_data.schedule.start_time and day_data.schedule.end_time %}
-                                    {{ day_data.schedule.start_time.strftime('%H:%M') }} - {{ day_data.schedule.end_time.strftime('%H:%M') }}
-                                    {% if day_data.schedule.is_virtual %}<span class="badge bg-info">Virtual</span>{% endif %}
-                                {% else %}
-                                    <span class="text-muted">No Schedule</span>
-                                {% endif %}
-                            {% else %}
-                                <span class="badge bg-secondary">No Schedule</span>
-                            {% endif %}
-                        </td>
-                        {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <a href="{{ url_for('web.logout') }}" class="btn btn-danger mt-3">Logout</a>
     </div>
-    <script>
+</body>
+
+<script>
     function toggleView() {
         const grid = document.getElementById("user-grid");
         const list = document.getElementById("user-list");
@@ -144,6 +28,5 @@
             list.classList.remove("d-none");
         }
     }
-    </script>
-</body>
+</script>
 {% endblock %}

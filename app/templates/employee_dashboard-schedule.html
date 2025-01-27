@@ -1,77 +1,94 @@
-<h2 class="mt-4">Edit Your Weekly Schedule</h2>
-<div class="mb-3">
-    <label for="scheduleTemplate" class="form-label">Load a Template:</label>
-    <select id="scheduleTemplate" class="form-select" onchange="loadTemplate(this.value)">
-        <option value="">Select a Template</option>
-        <option value="fulltime">Full Time (9:00 AM - 5:00 PM)</option>
-        <option value="parttime">Part Time</option>
-        <option value="weekend">Weekend</option>
-        <option value="custom1">Custom Template 1</option>
-    </select>
-</div>
-<form id="scheduleForm" method="POST" action="{{ url_for('web.update_schedule') }}">
-    {{ schedule_forms['Monday'].csrf_token }}
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Day</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Availability</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for day, form in schedule_forms.items() %}
-                {{ form.hidden_tag() }}
-                <tr class="align-middle">
-                    <td class="text-center">
-                        <strong>{{ day }}</strong>
-                        {% if day in ['Saturday', 'Sunday'] %}
-                        <span class="badge bg-secondary ms-2">Weekend</span>
-                        {% else %}
-                        <span class="badge bg-primary ms-2">Weekday</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                            {{ form.start_time(class_="form-control", id=day ~ "-start_time") }}
-                            {% if form.start_time.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.start_time.errors | join(', ') }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                            {{ form.end_time(class_="form-control", id=day ~ "-end_time") }}
-                            {% if form.end_time.errors %}
-                            <div class="invalid-feedback">
-                                {{ form.start_time.errors | join(', ') }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <div class="form-check form-switch">
-                            {{ form.is_virtual(class_="form-check-input", id=day ~ "-is_virtual") }}
-                            <label class="form-check-label" for="{{ day }}-is_virtual">Virtual</label>
-                        </div>
-                        <div class="form-check form-switch mt-2">
-                            {{ form.is_unavailable(class_="form-check-input", id=day ~ "-is_unavailable",
-                            onchange="toggleAvailability(this, '{{ day }}')") }}
-                            <label class="form-check-label" for="{{ day }}-is_unavailable">Unavailable</label>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<h2 class="mt-4">Your Weekly Schedule</h2>
+<div class="card p-3 mb-4 shadow-sm">
+    <div class="mb-3">
+        <label for="scheduleTemplate" class="form-label">
+            <i class="bi bi-layout-text-sidebar-reverse me-2"></i>Load a Template:</label>
+        <select id="scheduleTemplate" class="form-select" onchange="loadTemplate(this.value)">
+            <option value="">Select a Template</option>
+            <option value="fulltime">Full Time (9:00 AM - 5:00 PM)</option>
+            <option value="parttime">Part Time</option>
+            <option value="weekend">Weekend</option>
+            <option value="custom1">Custom Template 1</option>
+        </select>
     </div>
-    <button type="submit" class="btn btn-primary w-100 mt-3" id="saveScheduleButton">
-        <i class="bi bi-save me-2"></i>Save Schedule
-    </button>
-</form>
+    <form id="scheduleForm" method="POST" action="{{ url_for('web.update_schedule') }}">
+        {{ schedule_forms['Monday'].csrf_token }}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="bi bi-calendar2-week me-2"></i>Day</th>
+                        <th><i class="bi bi-clock-history me-2"></i>Start Time</th>
+                        <th><i class="bi bi-clock-fill me-2"></i>End Time</th>
+                        <th><i class="bi bi-toggle2-on me-2"></i>Availability</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day, form in schedule_forms.items() %}
+                    {{ form.hidden_tag() }}
+                    <tr class="align-middle">
+                        <td class="text-center">
+                            <strong>{{ day }}</strong>
+                            {% if day in ['Saturday', 'Sunday'] %}
+                            <span class="badge bg-secondary ms-2">
+                                <i class="bi bi-sun me-1"></i>Weekend</span>
+                            {% else %}
+                            <span class="badge bg-primary ms-2">
+                                <i class="bi bi-briefcase me-1"></i>Weekday</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                {{ form.start_time(class_="form-control", id=day ~ "-start_time") }}
+                                {% if form.start_time.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.start_time.errors | join(', ') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                {{ form.end_time(class_="form-control", id=day ~ "-end_time") }}
+                                {% if form.end_time.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.start_time.errors | join(', ') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                {{ form.is_virtual(class_="form-check-input", id=day ~ "-is_virtual") }}
+                                <label class="form-check-label" for="{{ day }}-is_virtual">
+                                    <i class="bi bi-laptop me-1"><span data-bs-toggle="tooltip"
+                                            title="Virtual"></span></i>
+                                    {% if not is_mobile %}
+                                    Virtual
+                                    {% endif %}
+                                </label>
+                            </div>
+                            <div class="form-check form-switch mt-2">
+                                {{ form.is_unavailable(class_="form-check-input", id=day ~ "-is_unavailable",
+                                onchange="toggleAvailability(this, '{{ day }}')") }}
+                                <label class="form-check-label" for="{{ day }}-is_unavailable">
+                                    <i class="bi bi-calendar-x me-1"><span data-bs-toggle="tooltip"
+                                            title="Unavailable"></span></i>
+                                    {% if not is_mobile %}
+                                    Unavailable
+                                    {% endif %}
+                                </label>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-3" id="saveScheduleButton">
+            <i class="bi bi-save me-2"></i>Save Schedule
+        </button>
+    </form>
+</div>

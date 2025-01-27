@@ -1,0 +1,38 @@
+<h2 class="mt-4">Weekly Schedule Overview</h2>
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                {% for day_date in week_dates %}
+                <th>{{ day_date.strftime('%A') }}<br>{{ day_date.strftime('%b %d') }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                {% for day_name, day_data in user_schedule_mapping[user.id].items() %}
+                <td>
+                    {% if day_data.has_time_off %}
+                    <span class="badge bg-warning text-dark">Day Off</span>
+                    {% elif day_data.schedule %}
+                    {% if day_data.schedule.is_unavailable %}<span class="badge bg-danger">Unavailable</span>
+                    {% elif day_data.schedule.start_time and day_data.schedule.end_time %}
+                    {{ day_data.schedule.start_time.strftime('%H:%M') }} - {{
+                    day_data.schedule.end_time.strftime('%H:%M') }}
+                    {% if day_data.schedule.is_virtual %}<span class="badge bg-info">Virtual</span>{% endif %}
+                    {% else %}
+                    <span class="text-muted">No Schedule</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge bg-secondary">No Schedule</span>
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
