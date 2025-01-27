@@ -14,7 +14,10 @@
             <tbody>
                 {% for request in time_off_requests %}
                 <tr>
-                    <td>{{ request.user.first_name }} {{ request.user.last_name}}</td>
+                    <td>
+                        <img src="{{ get_gravatar_url(request.user.email) }}" alt="User Gravatar"
+                            class="rounded-circle me-2" width="40" height="40">
+                        {{ request.user.first_name }} {{ request.user.last_name}}</td>
                     <td>{{ request.date }}</td>
                     <td class="text-center align-middle">
                         {% if request.status == 'pending' %}
