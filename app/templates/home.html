@@ -2,14 +2,21 @@
 {% block title %}Welcome to ctime Scheduler{% endblock %}
 {% block content %}
 <div class="container text-center mt-5">
-    <h1 class="mb-4">Welcome to ctime Scheduler</h1>
-    <p class="lead">
-        Effortlessly manage schedules, streamline operations, and stay ahead of your tasks. 
-        <br>Join today and make scheduling easier!
-    </p>
-    <div class="mt-4">
-        <a href="{{ url_for('web.login') }}" class="btn btn-primary btn-lg me-2">Login</a>
-        <a href="{{ url_for('web.register') }}" class="btn btn-outline-secondary btn-lg">Register</a>
+    <!-- Hero Section -->
+    <div class="card shadow-lg p-5 mb-4">
+        <h1 class="mb-4 display-4 fw-bold text-primary">Welcome to ctime Scheduler</h1>
+        <p class="lead text-muted">
+            Effortlessly manage schedules, streamline operations, and stay ahead of your tasks.
+            <br>Join today and make scheduling easier!
+        </p>
+        <div class="mt-4">
+            <a href="{{ url_for('web.login') }}" class="btn btn-primary btn-lg me-2">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Login
+            </a>
+            <a href="{{ url_for('web.register') }}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-pencil-square me-2"></i> Register
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -5,10 +5,6 @@
   cursor: pointer;
 }
 
-i.feather {
-  color: var(--bs-body-color);
-}
-
 /* Navbar Background and Text Color */
 .navbar {
   background-color: var(--bs-body-bg);
@@ -36,7 +32,7 @@ body {
   justify-content: space-between;
   padding: 0 1rem;
   flex-wrap: nowrap;
-  background-color: var(--bs-body-bg)
+  background-color: var(--bs-body-bg);
 }
 
 .gravatar-img {
@@ -59,6 +55,58 @@ body {
 html {
   scroll-behavior: smooth;
   transition: background-color 0.3s, color 0.3s;
+}
+
+/* Contrast-aware button styling */
+.navbar .btn-outline-light {
+  color: var(--bs-body-bg);
+  border-color: var(--bs-body-bg);
+  background-color: transparent;
+  transition: all 0.3s;
+}
+
+.navbar .btn-outline-light:hover {
+  color: var(--bs-body-color);
+  background-color: var(--bs-body-bg);
+  border-color: var(--bs-body-color);
+}
+
+.navbar .btn-primary {
+  color: var(--bs-light);
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  transition: all 0.3s;
+}
+
+.navbar .btn-primary:hover {
+  background-color: var(--bs-primary-hover, #0056b3);
+  border-color: var(--bs-primary-hover, #0056b3);
+}
+
+.navbar .btn {
+  font-weight: 600;
+  border-width: 2px;
+}
+
+/* High-contrast modes for specific themes */
+[data-bs-theme="light"] .navbar .btn-outline-light {
+  color: #000;
+  border-color: #000;
+}
+
+[data-bs-theme="light"] .navbar .btn-outline-light:hover {
+  background-color: #000;
+  color: #fff;
+}
+
+[data-bs-theme="dark"] .navbar .btn-outline-light {
+  color: #fff;
+  border-color: #fff;
+}
+
+[data-bs-theme="dark"] .navbar .btn-outline-light:hover {
+  background-color: #fff;
+  color: #000;
 }
 
 /* Dark Mode Toggle Styling */
@@ -155,12 +203,6 @@ select:focus {
 
 .card p {
   color: var(--bs-muted);
-}
-
-/* Interactive button styling */
-button:hover {
-  opacity: 0.9;
-  transition: opacity 0.3s;
 }
 
 /* Badge alignment */

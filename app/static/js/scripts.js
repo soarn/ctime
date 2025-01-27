@@ -30,9 +30,10 @@ const isDarkMode = getCookie("theme") === "dark";
 // Apply theme based on preference
 function applyTheme(darkMode) {
   document.documentElement.setAttribute("data-bs-theme", darkMode ? "dark" : "light");
-  themeIcon.setAttribute("data-feather", darkMode ? "sun" : "moon");
+
+  // Switch between icons for dark and light mode
+  themeIcon.className = darkMode ? "bi bi-sun-fill text-warning" : "bi bi-moon-fill text-primary";
   document.getElementById("currentThemeName").textContent = darkMode ? "Light Mode" : "Dark Mode";
-  feather.replace();
 }
 
 applyTheme(isDarkMode);
