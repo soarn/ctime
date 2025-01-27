@@ -23,7 +23,7 @@
                     <tr>
                         <td>{{ request.user.first_name }} {{ request.user.last_name}}</td>
                         <td>{{ request.date }}</td>
-                        <td>{{ request.comment or "No comment provided" }}</td>
+                        <td>{{ request.comment or "<i>No comment provided</i>"|safe }}</td>
                         <td class="text-center align-middle">
                             {% if request.status == 'pending' %}
                             <span class="badge bg-warning text-dark">Pending</span>

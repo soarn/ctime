@@ -1,155 +1,15 @@
 {% extends 'base.html' %}
 {% block title %}Employee Dashboard{% endblock %}
 {% block content %}
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Employee Dashboard</h1>
 
-        <h2 class="mt-4">Edit Your Weekly Schedule</h2>
-        <div class="mb-3">
-            <label for="scheduleTemplate" class="form-label">Load a Template:</label>
-            <select id="scheduleTemplate" class="form-select" onchange="loadTemplate(this.value)">
-                <option value="">Select a Template</option>
-                <option value="fulltime">Full Time (9:00 AM - 5:00 PM)</option>
-                <option value="parttime">Part Time</option>
-                <option value="weekend">Weekend</option>
-                <option value="custom1">Custom Template 1</option>
-            </select>
-        </div>
-        <form method="POST" action="{{ url_for('web.update_schedule') }}">
-            {{ schedule_forms['Monday'].csrf_token }}
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Day</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Availability</th>
-                            <!-- <th>Virtual</th>
-                            <th>Unavailable</th> -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for day, form in schedule_forms.items() %}
-                        {{ form.hidden_tag() }}
-                        <tr>
-                            <td>
-                                {{ day }}
-                                {% if day in ['Saturday', 'Sunday'] %}
-                                <span class="badge bg-secondary">Weekend</span>
-                                {% else %}
-                                <span class="badge bg-primary">Weekday</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                                    {{ form.start_time(class_="form-control is-invalid") }}
-                                    <div class="invalid-feedback">
-                                        {{ form.start_time.errors | join(', ') }}
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                                    {{ form.end_time(class_="form-control is-invalid") }}
-                                    <div class="invalid-feedback">
-                                        End time is required.
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
+        {% include 'employee_dashboard-schedule.html' %}
 
-                                <div class="form-check form-switch">
-                                    {{ form.is_virtual(class_="form-check-input") }}
-                                    <label class="form-check-label">Virtual</label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    {{ form.is_unavailable(class_="form-check-input") }}
-                                    <label class="form-check-label">Unavailable</label>
-                                </div>
-                            </td>
-                            <!-- <td>
-                                {{ form.is_virtual(class_="form-check-input") }}
-                                {% if form.is_virtual.data %}
-                                <i class="bi bi-laptop" style="color: var(--bs-info)"></i>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    {{ form.is_unavailable(class_="form-check-input") }}
-                                    <label class="form-check-label">Unavailable</label>
-                                </div>
-                            </td> -->
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <button type="submit" class="btn btn-primary w-100" id="saveScheduleButton">Save Schedule</button>
-        </form>
+        {% include 'employee_dashboard-time_off.html' %}
 
-        <h2 class="mt-4">Request Time Off</h2>
-        <form method="POST" action="{{ url_for('web.request_time_off') }}">
-            {{ time_off_form.hidden_tag() }}
-            <div class="mb-3">
-                {{ time_off_form.date.label(class_="form-label") }}
-                {{ time_off_form.date(class_="form-control") }}
-            </div>
-            <div class="mb-3">
-                {{ time_off_form.comment.label(class_="form-label") }}
-                {{ time_off_form.comment(class_="form-control") }}
-            </div>
-            {{ time_off_form.submit(class_="btn btn-warning w-100") }}
-        </form>
-
-        <h2 class="mt-4">Your Time Off Requests</h2>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Comment</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for request in time_off_requests %}
-                    <tr>
-                        <td>{{ request.date }}</td>
-                        <td class="text-center align-middle">
-                            {% if request.status == 'pending' %}
-                            <span class="badge bg-warning text-dark">Pending</span>
-                            {% elif request.status == 'approved' %}
-                            <span class="badge bg-success">Approved</span>
-                            {% else %}
-                            <span class="badge bg-danger">Rejected</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ request.comment or "No comment provided"}}</td>
-                        <td class="text-center align-middle">
-                            <div class="d-flex flex-column gap-2">
-                                {% if request.status == 'pending' %}
-                                <form method="POST" action="{{ url_for('web.cancel_time_off') }}" class="d-inline">
-                                    {{ cancel_time_off_form.csrf_token }}
-                                    {{ cancel_time_off_form.request_id(value=request.id) }}
-                                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                                        <i class="bi bi-x-circle me-1"></i> Cancel
-                                </form>
-                                {% else %}
-                                <button type="submit" class="btn btn-secondary btn-sm w-100" disabled>
-                                    <i class="bi bi-x-circle me-1"></i> Cancel
-                                {% endif %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
     </div>
 </body>
 
@@ -192,30 +52,95 @@
                 Saturday: { start: "", end: "", virtual: false, unavailable: true },
                 Sunday: { start: "", end: "", virtual: false, unavailable: true },
             }
-    };
+        };
 
-    if (schedule[template]) {
-        for (const [day, times] of Object.entries(schedule[template])) {
-            const startTimeInput = document.getElementById(`${day}-start_time`);
-            const endTimeInput = document.getElementById(`${day}-end_time`);
-            const isVirtualInput = document.getElementById(`${day}-is_virtual`);
-            const isUnavailableInput = document.getElementById(`${day}-is_unavailable`);
+        if (schedule[template]) {
+            for (const [day, times] of Object.entries(schedule[template])) {
+                const startTimeInput = document.getElementById(`${day}-start_time`);
+                const endTimeInput = document.getElementById(`${day}-end_time`);
+                const isVirtualInput = document.getElementById(`${day}-is_virtual`);
+                const isUnavailableInput = document.getElementById(`${day}-is_unavailable`);
 
-            if (startTimeInput) startTimeInput.value = times.start;
-            if (endTimeInput) endTimeInput.value = times.end;
-            if (isVirtualInput) isVirtualInput.checked = times.virtual;
-            if (isUnavailableInput) isUnavailableInput.checked = times.unavailable;
+                if (startTimeInput) startTimeInput.value = times.start;
+                if (endTimeInput) endTimeInput.value = times.end;
+                if (isVirtualInput) isVirtualInput.checked = times.virtual;
+                if (isUnavailableInput) isUnavailableInput.checked = times.unavailable;
+            }
         }
     }
-}
 
-// Confetti on schedule save
-document.getElementById("saveScheduleButton").addEventListener("click", function() {
-    confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
+    document.addEventListener("DOMContentLoaded", () => {
+        // Function to toggle availability dynamically
+        function toggleAvailability(checkbox, day) {
+            const startTime = document.getElementById(`${day}-start_time`);
+            const endTime = document.getElementById(`${day}-end_time`);
+            const isUnavailable = checkbox.checked;
+
+            if (startTime && endTime) {
+                startTime.disabled = isUnavailable;
+                endTime.disabled = isUnavailable;
+
+                if (isUnavailable) {
+                    startTime.value = "";
+                    endTime.value = "";
+                }
+            }
+        }
+
+        // Attach event listeners to all "Unavailable" checkboxes
+        const unavailableCheckboxes = document.querySelectorAll('[id$="-is_unavailable"]');
+        unavailableCheckboxes.forEach((checkbox) => {
+            const day = checkbox.id.split("-")[0];
+
+            // Initialize the toggle state on page load
+            toggleAvailability(checkbox, day);
+
+            // Add event listener for dynamic changes
+            checkbox.addEventListener("change", () => toggleAvailability(checkbox, day));
+        });
     });
-});
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Schedule Validation
+        $('#scheduleForm').submit(function (e) {
+            const inputs = document.querySelectorAll('.form-control');
+            let hasErrors = false;
+
+            inputs.forEach(input => {
+                const row = input.closest('tr');
+                if (row) {
+                    const startTime = row.querySelector('[id$="-start_time"]').value;
+                    const endTime = row.querySelector('[id$="-end_time"]').value;
+                    const feedback = row.querySelector('.invalid-feedback');
+
+                    // Check if end time is after start time
+                    if (startTime && endTime && startTime >= endTime) {
+                        row.querySelector('[id$="-start_time"]').classList.add('is-invalid');
+                        row.querySelector('[id$="-end_time"]').classList.add('is-invalid');
+                        if (feedback) {
+                            feedback.innerText = 'End time must be later than start time.';
+                        }
+                        hasErrors = true;
+                    } else {
+                        row.querySelector('[id$="-start_time"]').classList.remove('is-invalid');
+                        row.querySelector('[id$="-end_time"]').classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            if (hasErrors) {
+                e.preventDefault(); // Prevent form submission on errors
+            } else {
+                // Confetti on schedule save
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                this.submit(); // Submit the form if no errors
+            }
+        });
+    });
 </script>
 {% endblock %}
