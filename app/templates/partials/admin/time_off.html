@@ -31,7 +31,7 @@
                             <i class="bi bi-x-circle me-1"></i>Rejected</span>
                         {% endif %}
                     </td>
-                    <td>{{ request.comment or "<i>No comment provided</i>"|safe }}</td>
+                    <td>{% if request.comment %}{{ request.comment }}{% else %}<i>No comment provided</i>{% endif %}</td>
                     <td class="text-center align-middle">
                         <div class="d-flex flex-column gap-2">
                             <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">

@@ -57,7 +57,7 @@ def create_app():
     # Initialize the database
     # External call to prevent circular imports
     db.init_app(app)
-
+    
     # Initialize Migrate
     migrate = Migrate(app, db)
 

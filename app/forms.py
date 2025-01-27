@@ -1,7 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import DateField, StringField, IntegerField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, FloatField, SelectField, TextAreaField, TimeField
-from wtforms.validators import DataRequired, NumberRange, Email, Length, Optional, Regexp
-
+from wtforms.validators import DataRequired, NumberRange, Email, Length, Optional, Regexp, AnyOf
 
 # WEB: LOGIN FORM
 class LoginForm(FlaskForm):
@@ -57,7 +56,10 @@ class CancelTimeOffForm(FlaskForm):
 # ADMIN: APPROVE/REJECT TIME OFF FORM
 class ApproveRejectForm(FlaskForm):
     request_id = HiddenField('Request ID', validators=[DataRequired()])
-    action = HiddenField('Action', validators=[DataRequired()])  # 'approve' or 'reject'
+    action = HiddenField('Action', validators=[
+        DataRequired(),
+        AnyOf(['approve', 'reject'], message='Invalid action')
+    ])
     submit = SubmitField('Submit')
 
 # ADMIN: UPDATE SCHEDULE FORM

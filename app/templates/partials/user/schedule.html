@@ -54,7 +54,7 @@
                                 {{ form.end_time(class_="form-control", id=day ~ "-end_time") }}
                                 {% if form.end_time.errors %}
                                 <div class="invalid-feedback">
-                                    {{ form.start_time.errors | join(', ') }}
+                                    {{ form.end_time.errors | join(', ') }}
                                 </div>
                                 {% endif %}
                             </div>

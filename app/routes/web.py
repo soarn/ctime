@@ -70,6 +70,7 @@ def logout():
 
 # REGISTER ROUTE
 @web.route("/register", methods=["GET", "POST"])
+@limiter.limit("3 per hour")
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -79,10 +80,12 @@ def register():
         email = form.email.data
         password = form.password.data
 
-        # Check if the username is already taken
-        existing_user = User.query.filter_by(username=username).first()
+        # Check if the username or email is already taken
+        existing_user = User.query.filter(
+            (User.username == username) | (User.email == email)
+        ).first()
         if existing_user:
-            flash("Username already exists.", "danger")
+            flash("Username or email already exists.", "danger")
         else:
             # Check if this is the first user, if so, make them an admin
             role = "admin" if User.query.count() == 0 else "user"
@@ -219,9 +222,6 @@ def request_time_off():
             flash("Time off request submitted.", "success")
     else:
         flash("Failed to submit time off request. Please try again.", "danger")
-
-    return redirect(url_for("web.employee_dashboard"))
-
 # Cancel Time Off Route
 @web.route("/employee_dashboard/cancel_time_off", methods=["POST"])
 @login_required
@@ -229,15 +229,19 @@ def cancel_time_off():
     user_id = current_user.id
     request_id = request.form.get("request_id")
     time_off_request = TimeOffRequest.query.filter_by(id=request_id, user_id=user_id).first()
+    if not time_off_request:
+        flash("Failed to cancel time off request.", "danger")
+        return redirect(url_for("web.employee_dashboard"))
+    
     if time_off_request.status != "pending":
         flash("Cannot cancel a time off request that has already been approved or rejected.", "danger")
         return redirect(url_for("web.employee_dashboard"))
-    if time_off_request:
-        db.session.delete(time_off_request)
-        db.session.commit()
-        flash("Time off request cancelled.", "success")
-    else:
-        flash("Failed to cancel time off request.", "danger")
+    
+    db.session.delete(time_off_request)
+    db.session.commit()
+    flash("Time off request cancelled.", "success")
+
+    return redirect(url_for("web.employee_dashboard"))
 
     return redirect(url_for("web.employee_dashboard"))
 

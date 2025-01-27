@@ -103,7 +103,8 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         // Schedule Validation
-        $('#scheduleForm').submit(function (e) {
+        document.getElementById('scheduleForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent form submission immediately
             const inputs = document.querySelectorAll('.form-control');
             let hasErrors = false;
 
@@ -130,7 +131,7 @@
             });
 
             if (hasErrors) {
-                e.preventDefault(); // Prevent form submission on errors
+                return false;
             } else {
                 // Confetti on schedule save
                 confetti({
@@ -138,7 +139,7 @@
                     spread: 70,
                     origin: { y: 0.6 }
                 });
-                this.submit(); // Submit the form if no errors
+                e.target.submit(); // Submit the form if no errors
             }
         });
     });
