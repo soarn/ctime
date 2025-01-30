@@ -2,10 +2,12 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 from flask_login import current_user, login_required
+from pytz import timezone, utc
+import logging  
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import AdminWeeklyScheduleForm, ApproveRejectForm
-import logging  
+from utils import get_user_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,9 @@ def admin_dashboard():
     start_of_week = today - timedelta(days=today.weekday()) # Start on Monday
     week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
 
+    # Get the user's timezone
+    viewer_tz = get_user_timezone()
+
     # Map schedules to users
     user_schedule_mapping = {}
     for user in users:
@@ -48,6 +53,15 @@ def admin_dashboard():
         for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
             schedule = next((s for s in weekly_schedules if s.user_id == user.id and s.day_of_week == day), None)
             has_time_off = any(r for r in time_off_requests if r.user_id == user.id and r.date.strftime('%A') == day and r.status == 'approved')
+
+            # Convert times to viewer's timezone
+            if schedule and schedule.start_time:
+                schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                schedule.start_time = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+            if schedule and schedule.end_time:
+                schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                schedule.end_time = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+
             user_schedule_mapping[user.id][day] = {
                 'schedule': schedule,
                 'has_time_off': has_time_off,
@@ -59,7 +73,7 @@ def admin_dashboard():
         user_schedule_mapping=user_schedule_mapping,
         time_off_requests=time_off_requests,
         users=users,
-        week_dates=week_dates,
+        week_dates=week_dates
     )
 
 # ADMIN: HANDLE TIME OFF ROUTE

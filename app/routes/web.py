@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, flash, url_for,
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from pytz import timezone, utc
+from utils import get_user_timezone
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import CancelTimeOffForm, LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
@@ -129,6 +131,9 @@ def employee_dashboard():
     time_off_form = TimeOffRequestForm()
     cancel_time_off_form = CancelTimeOffForm()
 
+    # Get the user's timezone
+    viewer_tz = get_user_timezone()
+
     # Fetch existing schedules
     existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
 
@@ -137,9 +142,18 @@ def employee_dashboard():
         form.day_of_week.data = day # Populate hidden field
         if day in existing_schedules:
             schedule = existing_schedules[day]
+
+            # Convert the schedule times to the user's timezone
+            if schedule.start_time:
+                schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                schedule_start_time_local = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                form.start_time.data = schedule_start_time_local
+            if schedule.end_time:
+                schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                schedule_end_time_local = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+                form.end_time.data = schedule_end_time_local
+
             form.day_of_week.data = day
-            form.start_time.data = schedule.start_time
-            form.end_time.data = schedule.end_time
             form.is_virtual.data = schedule.is_virtual
             form.is_unavailable.data = schedule.is_unavailable
         else:
@@ -164,6 +178,9 @@ def update_schedule():
     # Initialize forms for each day of the week
     schedule_forms = {day: WeeklyScheduleForm(prefix=day) for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
 
+    # Get the user's timezone
+    viewer_tz = get_user_timezone()
+
     # Bind form data for each day
     for day, form in schedule_forms.items():
         form.day_of_week.data = day
@@ -177,11 +194,24 @@ def update_schedule():
             # Add new schedules
             for day, form in schedule_forms.items():
                 is_unavailable = form.is_unavailable.data
+
+                # Convert the schedule times to UTC
+                start_time_utc = None
+                end_time_utc = None
+                if form.start_time.data and form.end_time.data and not is_unavailable:
+                    start_time_datetime = datetime.combine(datetime.today(), form.start_time.data)
+                    start_time_localized = viewer_tz.localize(start_time_datetime)
+                    start_time_utc = start_time_localized.astimezone(utc).time()
+                    
+                    end_time_datetime = datetime.combine(datetime.today(), form.end_time.data)
+                    end_time_localized = viewer_tz.localize(end_time_datetime)
+                    end_time_utc = end_time_localized.astimezone(utc).time()
+
                 new_schedule = WeeklySchedule(
                     user_id=user_id,
                     day_of_week=day,
-                    start_time=form.start_time.data if not is_unavailable else None,
-                    end_time=form.end_time.data if not is_unavailable else None,
+                    start_time=start_time_utc,
+                    end_time=end_time_utc,
                     is_virtual=form.is_virtual.data,
                     is_unavailable=is_unavailable,
                 )
@@ -220,8 +250,11 @@ def request_time_off():
             db.session.add(time_off_request)
             db.session.commit()
             flash("Time off request submitted.", "success")
+            return redirect(url_for("web.employee_dashboard"))
     else:
         flash("Failed to submit time off request. Please try again.", "danger")
+        return redirect(url_for("web.employee_dashboard"))
+
 # Cancel Time Off Route
 @web.route("/employee_dashboard/cancel_time_off", methods=["POST"])
 @login_required
@@ -240,10 +273,8 @@ def cancel_time_off():
     db.session.delete(time_off_request)
     db.session.commit()
     flash("Time off request cancelled.", "success")
-
     return redirect(url_for("web.employee_dashboard"))
 
-    return redirect(url_for("web.employee_dashboard"))
 
 # Profile Route
 @web.route("/profile", methods=['GET', 'POST'])

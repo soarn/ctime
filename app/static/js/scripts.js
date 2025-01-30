@@ -85,3 +85,18 @@ document.querySelectorAll(".alert").forEach(alert => {
   alert.addEventListener('mouseenter', () => alert.classList.add('pause-animation'));
   alert.addEventListener('mouseleave', () => alert.classList.remove('pause-animation'));
 });
+
+////////////////
+// Timezone
+////////////////
+
+document.addEventListener("DOMContentLoaded", function () {
+  const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const existingTimezone = document.cookie.split('; ').find(row => row.startsWith('timezone='));
+
+  if (!existingTimezone || existingTimezone.split('=')[1] !== detectedTimezone) {
+    document.cookie = `timezone=${detectedTimezone}; path=/; max-age=31536000`; // 1 year
+    console.log("Updated timezone cookie:", detectedTimezone);
+    location.reload(); // Ensure the page loads with the correct timezone
+  }
+});

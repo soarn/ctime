@@ -11,7 +11,7 @@ from db.db_models import User
 from routes.web import web
 from routes.admin import admin
 from routes.globals import globals
-from utils import get_gravatar_url
+from utils import get_gravatar_url, get_user_timezone
 
 class Config:
     @classmethod
@@ -108,6 +108,7 @@ def create_app():
     
     # Register the Gravatar URL function as a global Jinja variable
     app.jinja_env.globals.update(get_gravatar_url=get_gravatar_url)
+    app.jinja_env.globals.update(get_user_timezone=get_user_timezone)
     
     return app
 
