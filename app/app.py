@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from flask_caching import Cache
 import os
 from db.db import db
 from db.db_models import User
@@ -29,6 +30,11 @@ class ProductionConfig(Config):
     SESSION_COOKIE_SECURE = True
     REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
+    # Security Headers
+    STRICT_TRANSPORT_SECURITY = 'max-age=31536000; includeSubDomains'
+    CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    X_CONTENT_TYPE_OPTIONS = 'nosniff'
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
 
     @classmethod
     def validate_config(cls):
@@ -41,11 +47,25 @@ def create_app():
     # Initialize Flask App
     app = Flask(__name__)
 
-    # Initialize Swagger
-    swagger = Swagger(app)
-
     # Load configuration from class
     app.config.from_object(ProductionConfig if os.getenv('FLASK_ENV') == 'production' else Config)
+
+    # Initialize Swagger
+    swagger_config = {
+        'headers': [],
+        'specs': [
+            {
+                'endpoint': 'apispec_1',
+                'route': '/apispec_1.json',
+                'rule_filter': lambda rule: True,
+                'model_filter': lambda tag: True,
+            }
+        ],
+        'static_url_path': '/flasgger_static',
+        'swagger_ui': True if os.getenv('FLASK_ENV') != 'production' else False,
+        'specs_route': '/docs'
+    }
+    swagger = Swagger(app, config=swagger_config)
 
     # Flask-Login Configuration
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
@@ -60,6 +80,15 @@ def create_app():
     
     # Initialize Migrate
     migrate = Migrate(app, db)
+
+    # Initialize Cache
+    cache_config = {
+        'DEBUG': os.getenv('FLASK_ENV') == 'development',
+        'CACHE_TYPE': 'simple',
+        'CACHE_DEFAULT_TIMEOUT': 300
+    }
+
+    cache = Cache(app, config=cache_config)
 
     # Register Blueprints
     app.register_blueprint(globals)
@@ -84,4 +113,5 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    debug_mode = os.getenv('FLASK_ENV') != 'production'
+    app.run(debug=debug_mode)

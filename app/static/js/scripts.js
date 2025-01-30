@@ -17,49 +17,71 @@ document.addEventListener('DOMContentLoaded', function () {
 const themeToggle = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
 
-// Function to get the cookie value
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
+// Check if the theme toggle and icon exist before proceeding
+if (themeToggle && themeIcon) {
+  function getCookie(name) {
+    name = encodeURIComponent(name);
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+      const cookieValue = parts.pop().split(';').shift();
+      return decodeURIComponent(cookieValue);
+    }
+    return null;
+  }
+
+  // Set the initial theme based on cookie value
+  const isDarkMode = getCookie("theme") === "dark";
+
+  // Apply theme based on preference
+  function applyTheme(darkMode) {
+    document.documentElement.setAttribute("data-bs-theme", darkMode ? "dark" : "light");
+
+    // Save theme to cookies
+    document.cookie = `theme=${darkMode ? "dark" : "light"}; path=/; max-age=31536000; SameSite=Strict; Secure`; // 1 year
+    // Update theme icon and text
+    themeIcon.className = darkMode ? "bi bi-sun-fill text-warning" : "bi bi-moon-fill text-primary";
+    document.getElementById("currentThemeName").textContent = darkMode ? "Light Mode" : "Dark Mode";
+  }
+
+  applyTheme(isDarkMode);
+
+  // Save theme to cookies and update theme when toggled
+  themeToggle.addEventListener("click", function () {
+    const darkMode = document.documentElement.getAttribute("data-bs-theme") !== "dark";
+    applyTheme(darkMode);
+  });
 }
-
-// Set the initial theme based on cookie value
-const isDarkMode = getCookie("theme") === "dark";
-
-// Apply theme based on preference
-function applyTheme(darkMode) {
-  document.documentElement.setAttribute("data-bs-theme", darkMode ? "dark" : "light");
-
-  // Switch between icons for dark and light mode
-  themeIcon.className = darkMode ? "bi bi-sun-fill text-warning" : "bi bi-moon-fill text-primary";
-  document.getElementById("currentThemeName").textContent = darkMode ? "Light Mode" : "Dark Mode";
-}
-
-applyTheme(isDarkMode);
-
-// Save theme to cookies and update theme when toggled
-themeToggle.addEventListener("click", function () {
-  const darkMode = document.documentElement.getAttribute("data-bs-theme") !== "dark";
-  document.cookie = `theme=${darkMode ? "dark" : "light"}; path=/; max-age=31536000`; // 1 year
-  applyTheme(darkMode);
-})
-
 
 //////////////////
 // Flash Messages
 //////////////////
 
-// Auto dismiss flash messages after 3 seconds
-setTimeout(function () {
-  let alerts = document.querySelectorAll(".alert");
-  alerts.forEach(function (alert) {
-    alert.classList.add("fade");
-    alert.classList.remove("show");
+// Allow configuration of timeout duration
+const FLASH_TIMEOUT = 3000;
 
-    // Remove the element from the DOM after the transition
-    setTimeout(function () {
-      alert.remove();
-    }, 1500);
-  });
-}, 3000);
+try {
+  setTimeout(function () {
+    let alerts = document.querySelectorAll(".alert");
+    alerts.forEach(function (alert) {
+      // Skip auto-dismiss for important messages
+      if (alert.classList.contains('alert-important')) return;
+
+      alert.classList.add("fade");
+      alert.classList.remove("show");
+
+      // Remove the element from the DOM after the transition
+      setTimeout(function () {
+        alert.remove();
+      }, 1500);
+    });
+  }, FLASH_TIMEOUT);
+} catch (error) {
+  console.error('Error handling flash messages:', error);
+}
+
+// Add pause on hover functionality
+document.querySelectorAll(".alert").forEach(alert => {
+  alert.addEventListener('mouseenter', () => alert.classList.add('pause-animation'));
+  alert.addEventListener('mouseleave', () => alert.classList.remove('pause-animation'));
+});
