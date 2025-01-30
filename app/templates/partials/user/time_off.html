@@ -6,7 +6,8 @@
             <label for="timeOffDate" class="form-label">
                 <i class="bi bi-calendar3 me-2"></i>Date
             </label>
-            {{ time_off_form.date(class_="form-control", id="timeOffDate") }}
+            {{ time_off_form.date(class_="form-control", id="timeOffDate",
+                min=today.strftime('%Y-%m-%d')) }}
         </div>
         <div class="mb-3">
             <label for="timeOffComment" class="form-label">

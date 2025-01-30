@@ -4,7 +4,6 @@ from flask_login import LoginManager
 from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
-from flask_caching import Cache
 import os
 from db.db import db
 from db.db_models import User
@@ -80,15 +79,6 @@ def create_app():
     
     # Initialize Migrate
     migrate = Migrate(app, db)
-
-    # Initialize Cache
-    cache_config = {
-        'DEBUG': os.getenv('FLASK_ENV') == 'development',
-        'CACHE_TYPE': 'simple',
-        'CACHE_DEFAULT_TIMEOUT': 300
-    }
-
-    cache = Cache(app, config=cache_config)
 
     # Register Blueprints
     app.register_blueprint(globals)

@@ -8,13 +8,15 @@ from utils import get_user_timezone
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
 from forms import CancelTimeOffForm, LoginForm, ProfileForm, RegisterForm, TimeOffRequestForm, WeeklyScheduleForm
-import logging  
+import logging
 
+# Initialize logger
 logger = logging.getLogger(__name__)
 
 # Blueprint Configuration
 web = Blueprint('web', __name__)
 
+# Rate Limiter Configuration
 limiter = Limiter(
         key_func=get_remote_address,
         default_limits=["200 per day", "50 per hour"]
@@ -30,6 +32,7 @@ def home():
 @limiter.limit("5 per minute")
 def login():
     form = LoginForm()
+
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
