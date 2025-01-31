@@ -147,14 +147,18 @@ def employee_dashboard():
             schedule = existing_schedules[day]
 
             # Convert the schedule times to the user's timezone
-            if schedule.start_time:
-                schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
-                schedule_start_time_local = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
-                form.start_time.data = schedule_start_time_local
-            if schedule.end_time:
-                schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
-                schedule_end_time_local = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
-                form.end_time.data = schedule_end_time_local
+            try:
+                if schedule.start_time:
+                    schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                    schedule_start_time_local = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                    form.start_time.data = schedule_start_time_local
+                if schedule.end_time:
+                    schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                    schedule_end_time_local = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+                    form.end_time.data = schedule_end_time_local
+            except Exception as e:
+                logger.error(f"Error converting schedule times for user {user_id} on {day}: {e}")
+                flash(f"Error converting schedule times for {day}.", "danger")
 
             form.day_of_week.data = day
             form.is_virtual.data = schedule.is_virtual
@@ -202,13 +206,18 @@ def update_schedule():
                 start_time_utc = None
                 end_time_utc = None
                 if form.start_time.data and form.end_time.data and not is_unavailable:
-                    start_time_datetime = datetime.combine(datetime.today(), form.start_time.data)
-                    start_time_localized = viewer_tz.localize(start_time_datetime)
-                    start_time_utc = start_time_localized.astimezone(utc).time()
-                    
-                    end_time_datetime = datetime.combine(datetime.today(), form.end_time.data)
-                    end_time_localized = viewer_tz.localize(end_time_datetime)
-                    end_time_utc = end_time_localized.astimezone(utc).time()
+                    try:
+                        start_time_datetime = datetime.combine(datetime.today(), form.start_time.data)
+                        start_time_localized = viewer_tz.localize(start_time_datetime)
+                        start_time_utc = start_time_localized.astimezone(utc).time()
+                        
+                        end_time_datetime = datetime.combine(datetime.today(), form.end_time.data)
+                        end_time_localized = viewer_tz.localize(end_time_datetime)
+                        end_time_utc = end_time_localized.astimezone(utc).time()
+                    except Exception as e:
+                        logger.error(f"Error converting schedule times for user {user_id} on {day}: {e}")
+                        flash(f"Error converting schedule times for {day}.", "danger")
+                        return redirect(url_for("web.employee_dashboard"))
 
                 new_schedule = WeeklySchedule(
                     user_id=user_id,

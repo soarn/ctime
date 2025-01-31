@@ -55,12 +55,16 @@ def admin_dashboard():
             has_time_off = any(r for r in time_off_requests if r.user_id == user.id and r.date.strftime('%A') == day and r.status == 'approved')
 
             # Convert times to viewer's timezone
-            if schedule and schedule.start_time:
-                schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
-                schedule.start_time = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
-            if schedule and schedule.end_time:
-                schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
-                schedule.end_time = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+            try:
+                if schedule and schedule.start_time:
+                    schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                    schedule.start_time = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                if schedule and schedule.end_time:
+                    schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                    schedule.end_time = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+            except Exception as e:
+                logger.error(f"Error converting schedule times for user {user.id} on {day}: {e}")
+                flash(f"Error converting schedule times for user {user.id} on {day}.", "danger")
 
             user_schedule_mapping[user.id][day] = {
                 'schedule': schedule,
@@ -184,13 +188,3 @@ def update_schedule(user_id):
 def add_schedule(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("add_schedule.html", user=user)
-
-
-# ADMIN: MANUAL ROUTE: CREATE DB
-@admin.route("/admin/create_db")
-@login_required
-@admin_required
-def create_db():
-    db.create_all()
-    return "Database Created!"
-    
