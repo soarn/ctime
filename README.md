@@ -2,35 +2,35 @@
 
 ## Goals
 
-1. Users:
-    1. Create schedule/availability
-    2. Request days off
-        1. Allow for comments/brief descriptions of why
-        2. All requests are subject to approval based on company needs
-        3. Blockout dates, Minimum Notice Periods, Maximum number of consecutive days off
-    3. Edit their profile
-    4. Dashboard
-        1. Information on next shift
-        2. Information on requested days off status
-        3. Full schedule for company/team
-2. Admins:
-    1. Create schedule/availability for users
-        1. Pagination on list/grid of users
-    2. Approve/Reject days off
-    3. Edit user profiles
-    4. Dashboard
-        1. Information on company/team
-        2. Full schedule
-3. Security:
-    1. Add password confirmation field in RegisterForm class
-    2. Implement password strength validation (add Length, Regexp validators)
-    3. Add email verification mechanism
-    4. Implement rate limiting for registration endpoint
-    5. Add CAPTCHA or similar anti-automation measure
-4. Modularity:
-    1. Add environment variables for different operating modes
-        1. Auto-approve time off
-    2. Deploy as Docker container
+- [ ] Users:
+  - [x] Create schedule/availability
+  - [x] Request days off
+    - [x] Allow for comments/brief descriptions of why
+    - [ ] All requests are subject to approval based on company needs
+    - [ ] Blockout dates, Minimum Notice Periods, Maximum number of consecutive days off
+  - [x] Edit their profile
+  - [x] Dashboard
+    - [x] Information on next shift
+    - [x] Information on requested days off status
+    - [ ] Full schedule for company/team
+- [ ] Admins:
+  - [x] Create schedule/availability for users
+    - [ ] Pagination on list/grid of users
+  - [x] Approve/Reject days off
+  - [ ] Edit user profiles
+  - [x] Dashboard
+    - [ ] Information on company/team
+    - [x] Full schedule
+- [ ] Security:
+  - [ ] Add password confirmation field in RegisterForm class
+  - [x] Implement password strength validation (add Length, Regexp validators)
+  - [ ] Add email verification mechanism
+  - [x] Implement rate limiting for registration endpoint
+  - [ ] Add CAPTCHA or similar anti-automation measure
+- [ ] Modularity:
+  - [ ] Add environment variables for different operating modes
+    - [ ] Auto-approve time off
+  - [ ] Deploy as Docker container
 
 ---
 
