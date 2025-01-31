@@ -96,21 +96,25 @@ def register():
             role = "admin" if User.query.count() == 0 else "user"
             
             # Create a new user
-            new_user = User(
-                first_name=first_name,
-                last_name=last_name,
-                username=username,
-                email=email,
-                role=role
-            )
-            new_user.set_password(password) # Hash the password
-            db.session.add(new_user)
-            db.session.commit()
-            flash("Registration successful! Please log in.", "success")
-            return redirect(url_for("web.login"))
+            try:
+                new_user = User(
+                    first_name=first_name,
+                    last_name=last_name,
+                    username=username,
+                    email=email,
+                    role=role
+                )
+                new_user.set_password(password) # Hash the password
+                db.session.add(new_user)
+                db.session.commit()
+                flash("Registration successful! Please log in.", "success")
+                return redirect(url_for("web.login"))
+            except Exception as e:
+                logger.error(f"Error during registration: {e}")
+                db.session.rollback()
+                flash("An error occurred during registration. Please try again.", "danger")
         
     return render_template("register.html", form=form)
-
 # DASHBOARD ROUTE
 @web.route("/dashboard")
 @login_required
@@ -245,6 +249,7 @@ def update_schedule():
             if not form.validate():
                 logger.error(f"Validation errors for {day}: {form.errors}")
         flash("Failed to update schedule. Please check the form and try again.", "danger")
+        return redirect(url_for("web.employee_dashboard"))
 
 # Request Time Off Route
 @web.route("/employee_dashboard/request_time_off", methods=["POST"])
