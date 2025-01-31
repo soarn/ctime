@@ -124,67 +124,57 @@ def handle_time_off():
 @login_required
 @admin_required
 def update_schedule(user_id):
+    user = User.query.get_or_404(user_id)
+
+    # Get admin's timezone
+    viewer_tz = get_user_timezone()
+
     if request.method == "GET":
-        user = User.query.get_or_404(user_id)
         forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
 
-        # Populate forms with existing schedules
+        # Fetch schedules
         schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
         for day, form in forms.items():
             form.day_of_week.data = day
             if day in schedules:
                 schedule = schedules[day]
-                form.start_time.data = schedule.start_time
-                form.end_time.data = schedule.end_time
+
+                try:
+                    if schedule.start_time:
+                        schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                        form.start_time.data = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                    if schedule.end_time:
+                        schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                        form.end_time.data = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+                except Exception as e:
+                    logger.error(f"Error converting times for user {user_id} on {day}: {e}")
+                    flash(f"Error displaying schedule times for {day}.", "danger")
+
                 form.is_virtual.data = schedule.is_virtual
                 form.is_unavailable.data = schedule.is_unavailable
 
         return render_template("add_schedule.html", user=user, forms=forms)
-    
-    # POST request: Update schedules
-    forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
 
-    # Bind form data and validate
+    # POST: Save schedule changes
+    forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+    
     for day, form in forms.items():
         form.process(formdata=request.form)
 
-    if all(form.validate_on_submit() for form in forms.values()):
-        try:
-            # Delete existing schedules for the user
-            WeeklySchedule.query.filter_by(user_id=user_id).delete()
+    if all(form.validate() for form in forms.values()):
+        WeeklySchedule.query.filter_by(user_id=user_id).delete()
 
-            # Add new schedules
-            for day, form in forms.items():
-                is_unavailable = form.is_unavailable.data
-                new_schedule = WeeklySchedule(
-                    user_id=user_id,
-                    day_of_week=day,
-                    start_time=form.start_time.data if not is_unavailable else None,
-                    end_time=form.end_time.data if not is_unavailable else None,
-                    is_virtual=form.is_virtual.data,
-                    is_unavailable=is_unavailable,
-                )
-                db.session.add(new_schedule)
-            
-            db.session.commit()
-            flash(f"Schedule for user {user_id} updated successfully.", "success")
-        except Exception as e:
-            db.session.rollback()
-            logger.error(f"Error during schedule update: {e}")
-            flash(f"An error occurred while updating the schedule for user {user_id}.", "danger")
-    else:
-        logger.error("Schedule form validation failed.")
         for day, form in forms.items():
-            if not form.validate():
-                logger.error(f"Schedule validation errors for {day}: {form.errors}")
-                flash(f"Validation errors for {day}: {form.errors}", "danger")
-    
-    return redirect(url_for('admin.admin_dashboard'))
+            is_unavailable = form.is_unavailable.data
+            start_time_utc, end_time_utc = None, None
 
-# ADMIN: ADD SCHEDULE ROUTE
-@admin.route("/admin_dashboard/add_schedule/<int:user_id>", methods=["GET"])
-@login_required
-@admin_required
-def add_schedule(user_id):
-    user = User.query.get_or_404(user_id)
-    return render_template("add_schedule.html", user=user)
+            if form.start_time.data and form.end_time.data and not is_unavailable:
+                start_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.start_time.data)).astimezone(utc).time()
+                end_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.end_time.data)).astimezone(utc).time()
+
+            db.session.add(WeeklySchedule(user_id=user_id, day_of_week=day, start_time=start_time_utc, end_time=end_time_utc, is_virtual=form.is_virtual.data, is_unavailable=is_unavailable))
+
+        db.session.commit()
+        flash("Schedule updated successfully.", "success")
+
+    return redirect(url_for("admin.admin_dashboard"))
