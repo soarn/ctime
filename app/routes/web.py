@@ -138,7 +138,13 @@ def employee_dashboard():
     viewer_tz = get_user_timezone()
 
     # Fetch existing schedules
-    existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
+    try:
+        existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
+        time_off_requests = TimeOffRequest.query.filter_by(user_id=user_id).all()
+    except Exception as e:
+        logger.error(f"Error fetching user data: {e}")
+        flash("Error loading dashboard data. Please try again.", "danger")
+        return redirect(url_for("web.home"))
 
     # Populate forms with existing data
     for day, form in schedule_forms.items():
@@ -165,8 +171,6 @@ def employee_dashboard():
             form.is_unavailable.data = schedule.is_unavailable
         else:
             form.day_of_week.data = day
-
-    time_off_requests = TimeOffRequest.query.filter_by(user_id=user_id).all()
 
     return render_template(
         "employee_dashboard.html",
@@ -255,6 +259,7 @@ def request_time_off():
         existing_request = TimeOffRequest.query.filter_by(user_id=user_id, date=date).first()
         if existing_request:
             flash("You have already requested time off for this date.", "warning")
+            return redirect(url_for("web.employee_dashboard"))
         else:
             time_off_request = TimeOffRequest(user_id=user_id, date=date, comment=comment)
             db.session.add(time_off_request)
@@ -306,7 +311,11 @@ def profile():
         current_user.email = form.email.data
         if form.password.data:
             current_user.set_password(form.password.data) # Hash and save the password
-        db.session.commit()
-        flash('Profile updated successfully!', 'success')
+        try:
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+        except Exception as e:
+            logger.error(f"Error updating profile: {e}")
+            flash('An error occurred while updating your profile. Please try again.', 'danger')
         return redirect(url_for('web.profile'))
     return render_template('profile.html', form=form)
