@@ -41,7 +41,7 @@ def login():
 
         if user and user.check_password(password):
             # Update the last login time
-            user.last_login = datetime.now()
+            user.last_login = datetime.now(datetime.timezone.utc)
             db.session.commit()
 
             # Log the user in, remember me is optional
