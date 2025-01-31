@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, flash, url_for,
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from pytz import timezone, utc
+from pytz import utc
 from utils import get_user_timezone
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
@@ -241,8 +241,6 @@ def update_schedule():
             if not form.validate():
                 logger.error(f"Validation errors for {day}: {form.errors}")
         flash("Failed to update schedule. Please check the form and try again.", "danger")
-
-    return redirect(url_for("web.employee_dashboard"))
 
 # Request Time Off Route
 @web.route("/employee_dashboard/request_time_off", methods=["POST"])

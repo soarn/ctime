@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 from flask_login import current_user, login_required
-from pytz import timezone, utc
+from pytz import utc
 import logging  
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
@@ -158,7 +158,7 @@ def update_schedule(user_id):
     # POST: Save schedule changes
     forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
     
-    for day, form in forms.items():
+    for form in forms.values():
         form.process(formdata=request.form)
 
     if all(form.validate() for form in forms.values()):

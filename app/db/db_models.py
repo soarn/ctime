@@ -48,5 +48,9 @@ class TimeOffRequest(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('time_off_requests', lazy=True))
     date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(10), default='pending')  # 'pending', 'approved', 'rejected'
+    VALID_STATUSES = ['pending', 'approved', 'rejected']
+    status = db.Column(db.String(10), default='pending', nullable=False)
+    __table_args__ = (
+        db.CheckConstraint(status.in_(VALID_STATUSES), name='valid_status'),
+    )
     comment = db.Column(db.Text(255), nullable=True)

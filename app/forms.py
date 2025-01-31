@@ -1,6 +1,7 @@
+import datetime
 from flask_wtf import FlaskForm
-from wtforms import DateField, StringField, IntegerField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, FloatField, SelectField, TextAreaField, TimeField
-from wtforms.validators import DataRequired, NumberRange, Email, Length, Optional, Regexp, AnyOf
+from wtforms import DateField, StringField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, TextAreaField, TimeField, ValidationError
+from wtforms.validators import DataRequired, Email, Length, Optional, Regexp, AnyOf
 
 # WEB: LOGIN FORM
 class LoginForm(FlaskForm):
@@ -36,15 +37,18 @@ class WeeklyScheduleForm(FlaskForm):
     def validate(self):
         if not super().validate():
             return False
-        if self.start_time.data and self.end_time.data:
-            if self.start_time.data >= self.end_time.data:
-                self.end_time.errors.append('End time must be after start time')
-                return False
+        if self.start_time.data and self.end_time.data and self.start_time.data >= self.end_time.data:
+            self.end_time.errors.append('End time must be after start time')
+            return False
         return True
 
 # WEB: REQUEST TIME OFF FORM
 class TimeOffRequestForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()])
+    
+    def validate_date(form, field):
+        if field.data <= datetime.now().date():
+            raise ValidationError('The date must be in the future.')
     comment = TextAreaField('Comment', render_kw={"placeholder": "Enter a reason for your request (optional)"}, validators=[Optional(), Length(max=255)])
     submit = SubmitField('Request Day Off')
 
