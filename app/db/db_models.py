@@ -1,5 +1,5 @@
 from db.db import db
-from datetime import datetime
+from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 
@@ -12,8 +12,8 @@ class User(UserMixin, db.Model):
     email         = db.Column(db.String   (100), nullable    =False, unique=True                                    )
     password_hash = db.Column(db.String   (255), nullable    =False                                                 )
     role          = db.Column(db.String   (10) , nullable    =False, default='user'                                 ) # 'user' or 'admin'
-    created_at    = db.Column(db.DateTime      , nullable    =False, default=datetime.now(datetime.timezone.utc)                        )
-    last_login    = db.Column(db.DateTime      , nullable    =True , default=datetime.now(datetime.timezone.utc), onupdate=datetime.now(datetime.timezone.utc))
+    created_at    = db.Column(db.DateTime      , nullable    =False, default=lambda: datetime.now(timezone.utc)     )
+    last_login    = db.Column(db.DateTime      , nullable    =True , default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Hash the password before storing it
     def set_password(self, password):

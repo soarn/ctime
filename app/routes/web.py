@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone as tz
 from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_limiter import Limiter
@@ -41,7 +41,7 @@ def login():
 
         if user and user.check_password(password):
             # Update the last login time
-            user.last_login = datetime.now(datetime.timezone.utc)
+            user.last_login = datetime.now(tz.utc)
             db.session.commit()
 
             # Log the user in, remember me is optional
