@@ -1,0 +1,62 @@
+<h2 class="mt-4">Time Off Requests</h2>
+<div class="card p-3 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th><i class="bi bi-person me-2"></i>Employee</th>
+                    <th><i class="bi bi-calendar-event me-2"></i>Date</th>
+                    <th><i class="bi bi-flag me-2"></i>Status</th>
+                    <th><i class="bi bi-chat-text me-2"></i>Comment</th>
+                    <th><i class="bi bi-gear me-2"></i>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in time_off_requests %}
+                <tr>
+                    <td>
+                        <img src="{{ get_gravatar_url(request.user.email) }}" alt="User Gravatar"
+                            class="rounded-circle me-2" width="40" height="40">
+                        {{ request.user.first_name }} {{ request.user.last_name}}</td>
+                    <td>{{ request.date }}</td>
+                    <td class="text-center align-middle">
+                        {% if request.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                        {% elif request.status == 'approved' %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Approved</span>
+                        {% else %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle me-1"></i>Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if request.comment %}{{ request.comment }}{% else %}<i>No comment provided</i>{% endif %}</td>
+                    <td class="text-center align-middle">
+                        <div class="d-flex flex-column gap-2">
+                            <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
+                                {{ approve_reject_form.csrf_token }}
+                                {{ approve_reject_form.request_id(value=request.id) }}
+                                {{ approve_reject_form.action(value='approve') }}
+                                <button type="submit" class="btn btn-success btn-sm w-100" data-bs-toggle="tooltip"
+                                    title="Approve Request">
+                                    <i class="bi bi-check-circle me-1"></i> Approve
+                                </button>
+                            </form>
+                            <form method="post" action="{{ url_for('admin.handle_time_off') }}" class="d-inline">
+                                {{ approve_reject_form.csrf_token }}
+                                {{ approve_reject_form.request_id(value=request.id) }}
+                                {{ approve_reject_form.action(value='reject') }}
+                                <button type="submit" class="btn btn-danger btn-sm w-100" data-bs-toggle="tooltip"
+                                    title="Reject Request">
+                                    <i class="bi bi-x-circle me-1"></i> Reject
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

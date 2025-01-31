@@ -90,12 +90,14 @@
 		"autofetch",
 		"Bootswatch",
 		"flasgger",
+		"formdata",
 		"jsonify",
+		"parttime",
 		"sqlalchemy",
 		"tickerwrapper",
 		"venv",
 		"werkzeug"
-	  ],
+	],
 	  "prettier.bracketSameLine": true
 	},
 	"extensions": {

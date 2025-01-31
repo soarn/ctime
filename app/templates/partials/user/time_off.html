@@ -1,0 +1,75 @@
+<h2 class="mt-4">Request Time Off</h2>
+<div class="card p-3 mb-4 shadow-sm">
+    <form method="POST" action="{{ url_for('web.request_time_off') }}">
+        {{ time_off_form.hidden_tag() }}
+        <div class="mb-3">
+            <label for="timeOffDate" class="form-label">
+                <i class="bi bi-calendar3 me-2"></i>Date
+            </label>
+            {{ time_off_form.date(class_="form-control", id="timeOffDate",
+                min=today.strftime('%Y-%m-%d')) }}
+        </div>
+        <div class="mb-3">
+            <label for="timeOffComment" class="form-label">
+                <i class="bi bi-chat-left-dots me-2"></i>Comment
+            </label>
+            {{ time_off_form.comment(class_="form-control", id="timeOffComment") }}
+        </div>
+        <button type="submit" class="btn btn-warning w-100">
+            <i class="bi bi-send me-2"></i>Request Time Off
+        </button>
+    </form>
+</div>
+
+<h2 class="mt-4">Your Time Off Requests</h2>
+<div class="card p-3 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th><i class="bi bi-calendar-event me-2"></i>Date</th>
+                    <th><i class="bi bi-flag me-2"></i>Status</th>
+                    <th><i class="bi bi-chat-text me-2"></i>Comment</th>
+                    <th><i class="bi bi-gear me-2"></i>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in time_off_requests %}
+                <tr>
+                    <td>{{ request.date }}</td>
+                    <td class="text-center align-middle">
+                        {% if request.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-hourglass-split me-1"></i>Pending</span>
+                        {% elif request.status == 'approved' %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>Approved</span>
+                        {% else %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle me-1"></i>Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if request.comment %}{{ request.comment }}{% else %}<i>No comment provided</i>{% endif %}</td>
+                    <td class="text-center align-middle">
+                        <div class="d-flex flex-column gap-2">
+                            {% if request.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('web.cancel_time_off') }}" class="d-inline">
+                                {{ cancel_time_off_form.csrf_token }}
+                                {{ cancel_time_off_form.request_id(value=request.id) }}
+                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                            </form>
+                            {% else %}
+                            <button type="submit" class="btn btn-secondary btn-sm w-100" disabled>
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

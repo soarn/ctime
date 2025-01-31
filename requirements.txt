@@ -13,3 +13,5 @@ flask-migrate
 flask-wtf
 email-validator
 user-agents
+flask_limiter
+pytz

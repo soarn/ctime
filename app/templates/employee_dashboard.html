@@ -1,73 +1,147 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% extends 'base.html' %}
+{% block title %}Employee Dashboard{% endblock %}
+{% block content %}
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Employee Dashboard</h1>
 
-        <h2 class="mt-4">Edit Your Weekly Schedule</h2>
-        <form method="post">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Day</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Virtual</th>
-                        <th>Unavailable</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-                    <tr>
-                        <td>{{ day }}</td>
-                        <td>
-                            <input type="time" name="start_time_{{ day }}" class="form-control"
-                                value="{% for schedule in weekly_schedules if schedule.day_of_week == day %}{{ schedule.start_time }}{% endfor %}">
-                        </td>
-                        <td>
-                            <input type="time" name="end_time_{{ day }}" class="form-control"
-                                value="{% for schedule in weekly_schedules if schedule.day_of_week == day %}{{ schedule.end_time }}{% endfor %}">
-                        </td>
-                        <td>
-                            <input type="checkbox" name="is_virtual_{{ day }}" class="form-check-input"
-                                {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_virtual %}checked{% endif %}{% endfor %}>
-                        </td>
-                        <td>
-                            <input type="checkbox" name="is_unavailable_{{ day }}" class="form-check-input"
-                                {% for schedule in weekly_schedules if schedule.day_of_week == day %}{% if schedule.is_unavailable %}checked{% endif %}{% endfor %}>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
-        </form>
+        {% include 'partials/user/schedule.html' %}
 
-        <h2 class="mt-4">Request Time Off</h2>
-        <form method="post" action="{{ url_for('request_day_off') }}">
-            <div class="mb-3">
-                <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control" id="date" name="date" required>
-            </div>
-            <button type="submit" class="btn btn-warning w-100">Request Day Off</button>
-        </form>
+        {% include 'partials/user/time_off.html' %}
 
-        <h2 class="mt-4">Your Time Off Requests</h2>
-        <ul class="list-group">
-            {% for request in time_off_requests %}
-            <li class="list-group-item">
-                {{ request.date }} - {{ request.status }}
-            </li>
-            {% endfor %}
-        </ul>
-
-        <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">Logout</a>
     </div>
 </body>
-</html>
+
+<script>
+    function loadTemplate(template) {
+        const schedule = {
+            fulltime: {
+                Monday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Tuesday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Wednesday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Thursday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Friday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            },
+            parttime: {
+                Monday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Tuesday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Wednesday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Thursday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Friday: { start: "09:00", end: "13:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            },
+            weekend: {
+                Monday: { start: "", end: "", virtual: false, unavailable: true },
+                Tuesday: { start: "", end: "", virtual: false, unavailable: true },
+                Wednesday: { start: "", end: "", virtual: false, unavailable: true },
+                Thursday: { start: "", end: "", virtual: false, unavailable: true },
+                Friday: { start: "", end: "", virtual: false, unavailable: true },
+                Saturday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+                Sunday: { start: "09:00", end: "17:00", virtual: false, unavailable: false },
+            },
+            custom1: {
+                Monday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Tuesday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Wednesday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Thursday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Friday: { start: "10:00", end: "16:00", virtual: false, unavailable: false },
+                Saturday: { start: "", end: "", virtual: false, unavailable: true },
+                Sunday: { start: "", end: "", virtual: false, unavailable: true },
+            }
+        };
+
+        if (schedule[template]) {
+            for (const [day, times] of Object.entries(schedule[template])) {
+                const startTimeInput = document.getElementById(`${day}-start_time`);
+                const endTimeInput = document.getElementById(`${day}-end_time`);
+                const isVirtualInput = document.getElementById(`${day}-is_virtual`);
+                const isUnavailableInput = document.getElementById(`${day}-is_unavailable`);
+
+                if (startTimeInput) startTimeInput.value = times.start;
+                if (endTimeInput) endTimeInput.value = times.end;
+                if (isVirtualInput) isVirtualInput.checked = times.virtual;
+                if (isUnavailableInput) isUnavailableInput.checked = times.unavailable;
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Function to toggle availability dynamically
+        function toggleAvailability(checkbox, day) {
+            const startTime = document.getElementById(`${day}-start_time`);
+            const endTime = document.getElementById(`${day}-end_time`);
+            const isUnavailable = checkbox.checked;
+
+            if (startTime && endTime) {
+                startTime.disabled = isUnavailable;
+                endTime.disabled = isUnavailable;
+
+                if (isUnavailable) {
+                    startTime.value = "";
+                    endTime.value = "";
+                }
+            }
+        }
+
+        // Attach event listeners to all "Unavailable" checkboxes
+        const unavailableCheckboxes = document.querySelectorAll('[id$="-is_unavailable"]');
+        unavailableCheckboxes.forEach((checkbox) => {
+            const day = checkbox.id.split("-")[0];
+
+            // Initialize the toggle state on page load
+            toggleAvailability(checkbox, day);
+
+            // Add event listener for dynamic changes
+            checkbox.addEventListener("change", () => toggleAvailability(checkbox, day));
+        });
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Schedule Validation
+        document.getElementById('scheduleForm').addEventListener('submit', function (e) {
+            e.preventDefault(); // Prevent form submission immediately
+            const inputs = document.querySelectorAll('.form-control');
+            let hasErrors = false;
+
+            inputs.forEach(input => {
+                const row = input.closest('tr');
+                if (row) {
+                    const startTime = row.querySelector('[id$="-start_time"]').value;
+                    const endTime = row.querySelector('[id$="-end_time"]').value;
+                    const feedback = row.querySelector('.invalid-feedback');
+
+                    // Check if end time is after start time
+                    if (startTime && endTime && startTime >= endTime) {
+                        row.querySelector('[id$="-start_time"]').classList.add('is-invalid');
+                        row.querySelector('[id$="-end_time"]').classList.add('is-invalid');
+                        if (feedback) {
+                            feedback.innerText = 'End time must be later than start time.';
+                        }
+                        hasErrors = true;
+                    } else {
+                        row.querySelector('[id$="-start_time"]').classList.remove('is-invalid');
+                        row.querySelector('[id$="-end_time"]').classList.remove('is-invalid');
+                    }
+                }
+            });
+
+            if (hasErrors) {
+                return false;
+            } else {
+                // Confetti on schedule save
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                e.target.submit(); // Submit the form if no errors
+            }
+        });
+    });
+</script>
+{% endblock %}

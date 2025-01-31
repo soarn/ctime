@@ -1,0 +1,69 @@
+<h2 class="mt-4">Weekly Schedule Overview</h2>
+<div class="alert-important alert alert-info d-flex align-items-center py-2 px-3 mb-3 rounded-3 shadow-sm" role="alert">
+    <i class="bi bi-globe2 me-2"></i> 
+    <strong class="me-2">All times displayed in:</strong> {{ get_user_timezone() }}
+</div>
+<div class="card p-3 mb-4 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th class="sticky-column"><i class="bi bi-person-fill"></i>Employee</th>
+                    {% for day_date in week_dates %}
+                    <th>
+                        <i class="bi bi-calendar-week me-1"></i>
+                        {{ day_date.strftime('%A') }}<br>
+                        <small class="text-muted">{{ day_date.strftime('%b %d') }}</small>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td class="sticky-column text-center">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <img src="{{ get_gravatar_url(user.email) }}" alt="User Gravatar" class="rounded-circle"
+                                width="40" height="40">
+                            <span class="ms-2">{{ user.first_name }} {{ user.last_name }}</span>
+                        </div>
+                    </td>
+                    {% for day_name, day_data in user_schedule_mapping[user.id].items() %}
+                    <td class="text-center">
+                        {% if day_data.has_time_off %}
+                        <span class="badge bg-warning text-dark" title="Day Off">
+                            <i class="bi bi-sun me-1"></i>Day Off
+                        </span>
+                        {% elif day_data.schedule %}
+                        {% if day_data.schedule.is_unavailable %}
+                        <span class="badge bg-danger" title="Unavailable">
+                            <i class="bi bi-x-circle me-1"></i>Unavailable
+                        </span>
+                        {% elif day_data.schedule.start_time and day_data.schedule.end_time %}
+                        <div> <!-- This div ensures that badges are displayed underneath the times -->
+                            {{ day_data.schedule.start_time.strftime('%H:%M %Z') }} - {{
+                            day_data.schedule.end_time.strftime('%H:%M %Z') }}
+                        </div>
+                        {% if day_data.schedule.is_virtual %}
+                        <span class="badge bg-info" title="Virtual Work">
+                            <i class="bi bi-laptop me-1"></i>Virtual
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-secondary text-dark" title="No Schedule">
+                            <i class="bi bi-slash-circle me-1"></i>No Schedule
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-secondary text-dark" title="No Schedule">
+                            <i class="bi bi-slash-circle me-1"></i>No Schedule
+                        </span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
