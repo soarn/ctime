@@ -1,31 +1,39 @@
 from datetime import datetime
-from flask import Blueprint, jsonify, redirect, request, flash, url_for
-from flask_login import login_required, current_user
+from flask import Blueprint, jsonify, request
+from flasgger import swag_from
 from pytz import utc, timezone as tz
 from db.db_models import User, WeeklySchedule
-from db.db import db
-from utils import get_user_timezone
 from auth import api_key_required
 
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 
-# Generate API Key
-@api_v1.route('/generate_key', methods=['POST'], endpoint='generate_key')
-@login_required
-def generate_key():
-    """Allows authenticated users to generate a new API key."""
-    try:
-        current_user.generate_api_key()
-    except Exception as e:
-        return jsonify({'message': f"Error generating API key: {e}"}), 500
-    
-    flash("API key generated successfully", "success")
-    return redirect(url_for('web.profile'))
-    
-
 # Get User Details
 @api_v1.route('/user', methods=['GET'], endpoint='get_user')
 @api_key_required()
+@swag_from({
+    'tags': ['User'],
+    'summary': 'Get User Details',
+    'description': 'Returns details of the authenticated user.',
+    'security': [{'APIKeyAuth': []}],
+    'responses': {
+        200: {
+            'description': 'User details retrieved successfully',
+            'schema': {
+                'id': 'User',
+                'properties': {
+                    'id': {'type': 'integer'},
+                    'first_name': {'type': 'string'},
+                    'last_name': {'type': 'string'},
+                    'username': {'type': 'string'},
+                    'email': {'type': 'string'},
+                    'role': {'type': 'string'}
+                }
+            }
+        },
+        401: {'description': 'Unauthorized - Missing or invalid API key'},
+        418: {'description': 'Invalid API key'}
+    }
+})
 def get_user(user):
     """Returns the details of the authenticated user."""
     # return jsonify({'user': user.to_dict()}), 200
@@ -41,6 +49,33 @@ def get_user(user):
 # Get All Users (Admin Only)
 @api_v1.route('/users/all', methods=['GET'], endpoint='get_all_users')
 @api_key_required(admin_only=True)
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Get All Users',
+    'description': 'Returns a list of all users (Admin only).',
+    'security': [{'APIKeyAuth': []}],
+    'responses': {
+        200: {
+            'description': 'List of all users retrieved successfully',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'properties': {
+                        'id': {'type': 'integer'},
+                        'first_name': {'type': 'string'},
+                        'last_name': {'type': 'string'},
+                        'username': {'type': 'string'},
+                        'email': {'type': 'string'},
+                        'role': {'type': 'string'}
+                    }
+                }
+            }
+        },
+        401: {'description': 'Unauthorized - Missing or invalid API key'},
+        403: {'description': 'Forbidden - Admin access required'},
+        418: {'description': 'Invalid API key'}
+    }
+})
 def get_all_users(user):
     """Returns a list of all users (Admin only)."""
     users = User.query.all()
@@ -52,6 +87,43 @@ def get_all_users(user):
 # Get User Schedule
 @api_v1.route('/schedule', methods=['GET'], endpoint='get_user_schedule')
 @api_key_required()
+@swag_from({
+    'tags': ['Schedule'],
+    'summary': 'Get User Schedule',
+    'description': 'Returns the authenticated user\'s schedule.',
+    'security': [{'APIKeyAuth': []}],
+    'parameters': [
+        {
+            'name': 'timezone',
+            'in': 'query',
+            'type': 'string',
+            'description': 'Timezone for schedule conversion (default: UTC)'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Schedule retrieved successfully',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'schedule': {'type': 'array', 'items': {
+                        'properties': {
+                            'day': {'type': 'string'},
+                            'start_time': {'type': 'string'},
+                            'end_time': {'type': 'string'},
+                            'is_virtual': {'type': 'boolean'},
+                            'is_unavailable': {'type': 'boolean'}
+                        }
+                    }},
+                    'timezone': {'type': 'string'}
+                }
+            }
+        },
+        400: {'description': 'Invalid timezone'},
+        401: {'description': 'Unauthorized - Missing or invalid API key'},
+        418: {'description': 'Invalid API key'}
+    }
+})
 def get_user_schedule(user):
     """Returns the authenticated user's schedule."""
     schedules = WeeklySchedule.query.filter_by(user_id=user.id).all()
@@ -89,6 +161,36 @@ def get_user_schedule(user):
 # Get All Schedules (Admin Only)
 @api_v1.route('/schedule/all', methods=['GET'], endpoint='get_all_schedules')
 @api_key_required(admin_only=True)
+@swag_from({
+    'tags': ['Admin'],
+    'summary': 'Get All Schedules',
+    'description': 'Returns all schedules (Admin only).',
+    'security': [{'APIKeyAuth': []}],
+    'parameters': [
+        {
+            'name': 'timezone',
+            'in': 'query',
+            'type': 'string',
+            'description': 'Timezone for schedule conversion (default: UTC)'
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'All schedules retrieved successfully',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'schedules': {'type': 'object'},
+                    'timezone': {'type': 'string'}
+                }
+            }
+        },
+        400: {'description': 'Invalid timezone'},
+        401: {'description': 'Unauthorized - Missing or invalid API key'},
+        403: {'description': 'Forbidden - Admin access required'},
+        418: {'description': 'Invalid API key'}
+    }
+})
 def get_all_schedules(user):
     """Returns all schedules (Admin only)."""
     schedules = WeeklySchedule.query.all()
@@ -127,4 +229,4 @@ def get_all_schedules(user):
         except Exception as e:
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
     
-    return jsonify({"schedule": all_schedules, "timezone": viewer_tz.zone})
+    return jsonify({"schedules": all_schedules, "timezone": viewer_tz.zone})

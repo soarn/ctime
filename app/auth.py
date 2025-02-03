@@ -13,7 +13,7 @@ def api_key_required(admin_only=False):
             
             user = User.query.filter_by(api_key=api_key).first()
             if not user:
-                return jsonify({'error': 'Invalid API key'}), 401
+                return jsonify({'error': 'Invalid API key'}), 418
             
             if admin_only and user.role != 'admin':
                 return jsonify({'error': 'Admin access required'}), 403

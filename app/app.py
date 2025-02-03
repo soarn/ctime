@@ -63,7 +63,20 @@ def create_app():
         ],
         'static_url_path': '/flasgger_static',
         'swagger_ui': True if os.getenv('FLASK_ENV') != 'production' else False,
-        'specs_route': '/docs'
+        'specs_route': '/docs',
+        'securityDefinitions': {
+            'APIKeyAuth': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+                'description': 'Enter your API key'
+            }
+        },
+        'security': [
+            {
+                'APIKeyAuth': []
+            }
+        ]
     }
     swagger = Swagger(app, config=swagger_config)
 
