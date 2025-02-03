@@ -7,7 +7,10 @@ def api_key_required(admin_only=False):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            api_key = request.headers.get('Authorization')
+            auth_header = request.headers.get('Authorization')
+            if not auth_header or not auth_header.startswith('Bearer '):
+                return jsonify({'error': 'Invalid Authorization header format. Use: Bearer <API_KEY>'}), 401
+            api_key = auth_header.replace('Bearer ', '')
             if not api_key:
                 return jsonify({'error': 'Missing API key'}), 401
             

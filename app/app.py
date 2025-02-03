@@ -69,7 +69,7 @@ def create_app():
                 'type': 'apiKey',
                 'in': 'header',
                 'name': 'Authorization',
-                'description': 'Enter your API key'
+                'description': 'Enter your API key as: Bearer <API_KEY>'
             }
         },
         'security': [
