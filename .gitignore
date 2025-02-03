@@ -5,6 +5,7 @@
 !.env.project
 !.env.vault
 .hintrc
+bruno/
 
 # BEGIN NODE
 
