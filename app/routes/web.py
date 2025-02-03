@@ -141,6 +141,9 @@ def employee_dashboard():
     # Get the user's timezone
     viewer_tz = get_user_timezone()
 
+    # Get today's date in the user's timezone
+    today = datetime.now(viewer_tz).date()
+
     # Fetch existing schedules
     try:
         existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
@@ -168,7 +171,7 @@ def employee_dashboard():
                     form.end_time.data = schedule_end_time_local
             except Exception as e:
                 logger.error(f"Error converting schedule times for user {user_id} on {day}: {e}")
-                flash(f"Error converting schedule times for {day}.", "danger")
+                flash(f"Error converting schedule times for {day}.", "danger") 
 
             form.day_of_week.data = day
             form.is_virtual.data = schedule.is_virtual
@@ -181,7 +184,8 @@ def employee_dashboard():
         schedule_forms=schedule_forms,
         time_off_form=time_off_form,
         time_off_requests=time_off_requests,
-        cancel_time_off_form=cancel_time_off_form
+        cancel_time_off_form=cancel_time_off_form,
+        today=today
     )
 
 # Update Schedule Route
