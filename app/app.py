@@ -10,6 +10,7 @@ from db.db_models import User
 from routes.web import web
 from routes.admin import admin
 from routes.globals import globals
+from routes.api_v1 import api_v1
 from utils import get_gravatar_url, get_user_timezone
 
 class Config:
@@ -84,6 +85,7 @@ def create_app():
     app.register_blueprint(globals)
     app.register_blueprint(web)
     app.register_blueprint(admin)
+    app.register_blueprint(api_v1, url_prefix='/api/v1')
 
     # Initialize Login Manager
     login_manager = LoginManager(app)
