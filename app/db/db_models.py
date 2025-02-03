@@ -2,6 +2,7 @@ from db.db import db
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+import secrets
 
 # Database Models
 class User(UserMixin, db.Model):
@@ -14,6 +15,7 @@ class User(UserMixin, db.Model):
     role          = db.Column(db.String   (10) , nullable    =False, default='user'                                 ) # 'user' or 'admin'
     created_at    = db.Column(db.DateTime      , nullable    =False, default=lambda: datetime.now(timezone.utc)     )
     last_login    = db.Column(db.DateTime      , nullable    =True , default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    api_key       = db.Column(db.String   (64) , nullable    =True , unique=True                                    )
 
     # Hash the password before storing it
     def set_password(self, password):
@@ -32,6 +34,16 @@ class User(UserMixin, db.Model):
     # Check the password against the stored hash
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    # Generate a new API key
+    def generate_api_key(self):
+        self.api_key = secrets.token_hex(32) # Secure 64-character key
+        db.session.commit()
+        return self.api_key
+
+    def clear_api_key(self):
+        self.api_key = None
+        db.session.commit()
 
 class WeeklySchedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
