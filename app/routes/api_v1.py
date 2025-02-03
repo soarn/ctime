@@ -148,8 +148,8 @@ def get_user_schedule(user):
             
             schedule_data.append({
                 "day": schedule.day_of_week,
-                "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time else None,
-                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time else None,
+                "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time and schedule_start_time_local else None,
+                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_start_time_local else None,
                 "is_virtual": schedule.is_virtual,
                 "is_unavailable": schedule.is_unavailable
             })
@@ -221,8 +221,8 @@ def get_all_schedules(user):
             
             all_schedules[schedule.user_id]["schedules"].append({
                 "day": schedule.day_of_week,
-                "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time else None,
-                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time else None,
+                "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time and schedule_start_time_local else None,
+                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_start_time_local else None,
                 "is_virtual": schedule.is_virtual,
                 "is_unavailable": schedule.is_unavailable
             })
