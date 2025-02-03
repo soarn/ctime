@@ -52,7 +52,7 @@
                         </form>
                         <hr>
                         <h3 id="apiKeySection">API Key</h3>
-                        <form method="POST" action="{{ url_for('api_v1.generate_key') }}">
+                        <form method="POST" action="{{ url_for('web.generate_api_key') }}">
                             {{ form.hidden_tag() }}
                             <div class="input-group mb-3">
                                 <input type="password" id="apiKey" class="form-control"
@@ -97,19 +97,33 @@
             apiKeyField.setSelectionRange(0, 99999); // For mobile devices
             navigator.clipboard.writeText(apiKeyField.value);
 
-            // Create badge
+            // Check if a badge already exists
+            let existingBadge = document.querySelector('#apiKeySection .badge');
+            if (existingBadge) {
+            // Reset the fade out timer if badge exists
+            clearTimeout(existingBadge.fadeTimeout);
+            existingBadge.classList.remove('fade');
+            existingBadge.fadeTimeout = setTimeout(function () {
+                existingBadge.classList.add('fade');
+                setTimeout(function () {
+                existingBadge.remove();
+                }, 1500);
+            }, 3000);
+            } else {
+            // Create new badge if it doesn't exist
             const badge = document.createElement('span');
             badge.className = 'badge bg-success ms-2';
             badge.innerText = 'Copied!';
             document.getElementById('apiKeySection').appendChild(badge);
 
             // Fade out after 3 seconds
-            setTimeout(function () {
-            badge.classList.add('fade');
-            setTimeout(function () {
+            badge.fadeTimeout = setTimeout(function () {
+                badge.classList.add('fade');
+                setTimeout(function () {
                 badge.remove();
-            }, 1500);
+                }, 1500);
             }, 3000);
+            }
         });
     </script>
 </body>

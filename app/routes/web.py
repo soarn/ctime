@@ -328,3 +328,23 @@ def profile():
             flash('An error occurred while updating your profile. Please try again.', 'danger')
         return redirect(url_for('web.profile'))
     return render_template('profile.html', form=form)
+
+# Generate API Key Route
+@web.route('/generate_api_key', methods=['POST'])
+@login_required
+def generate_api_key():
+    """Allows a user to generate or reset their API key."""
+    try:
+        # Ensure the user doesn't spam key resets
+        if current_user.api_key:
+            flash("Your API key has been regenerated.", "warning")
+        else:
+            flash("API key generated successfully.", "success")
+        
+        current_user.generate_api_key()
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Error generating API key: {e}")
+        flash("An error occurred while generating your API key. Please try again.", "danger")
+    
+    return redirect(url_for('web.profile'))
