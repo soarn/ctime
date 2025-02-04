@@ -1,8 +1,11 @@
-from datetime import datetime
-from flask import Blueprint, jsonify, request
+from datetime import datetime, timedelta
+from flask import Blueprint, jsonify, request, send_file
 from flasgger import swag_from
 from pytz import utc, timezone as tz
-from db.db_models import User, WeeklySchedule
+import io
+import pandas as pd
+import dataframe_image as dfi
+from db.db_models import User, WeeklySchedule, TimeOffRequest
 from auth import api_key_required
 
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
@@ -149,7 +152,7 @@ def get_user_schedule(user):
             schedule_data.append({
                 "day": schedule.day_of_week,
                 "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time and schedule_start_time_local else None,
-                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_start_time_local else None,
+                "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_end_time_local else None,
                 "is_virtual": schedule.is_virtual,
                 "is_unavailable": schedule.is_unavailable
             })
@@ -230,3 +233,112 @@ def get_all_schedules(user):
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
     
     return jsonify({"schedules": all_schedules, "timezone": viewer_tz.zone})
+
+# Get Full Schedule Image (Admin Only)
+@api_v1.route('/schedule/image', methods=['GET'], endpoint='get_schedules_image')
+@api_key_required(admin_only=True)
+def get_schedules_image(user):
+    """Returns an image representation of all schedules (Admin only)."""
+
+    schedules = WeeklySchedule.query.all()
+    time_off_requests = TimeOffRequest.query.all()
+    users = {u.id: f"{u.first_name} {u.last_name}" for u in User.query.all()}
+
+    # Get timezone from request args, default to UTC if not provided
+    tz_name = request.args.get('timezone', 'UTC')
+    try:
+        viewer_tz = tz(tz_name)
+    except Exception as e:
+        return jsonify({'message': f"Invalid timezone: {e}"}), 400
+
+    # Get the current week's Monday and calculate all dates for this week
+    today = datetime.today().date()
+    start_of_week = today - timedelta(days=today.weekday())  # Get Monday of this week
+    days_of_week = [(start_of_week + timedelta(days=i)).strftime("%A, %b %d") for i in range(7)]  # Monday to Sunday
+    day_date_mapping = {d.split(",")[0]: d for d in days_of_week}  # {"Monday": "Monday, Feb 05", ...}
+
+    # Filter time-off requests for current and future dates only
+    time_off_requests = [t for t in time_off_requests if t.date >= today]
+
+    # Organize time-off data properly
+    time_off_data = {}
+    for t in time_off_requests:
+        day_of_week = t.date.strftime("%A")  # Convert date to day name
+        if t.user_id not in time_off_data:
+            time_off_data[t.user_id] = {}
+        time_off_data[t.user_id][day_of_week] = "Day Off"
+
+    # Organize schedule data
+    schedule_data = {}
+    for schedule in schedules:
+        user_id = schedule.user_id
+        day = schedule.day_of_week
+
+        if user_id not in schedule_data:
+            schedule_data[user_id] = {"user": users[user_id], "schedule": {d: "No Schedule" for d in day_date_mapping.keys()}}
+
+        # Convert schedule times to the specified timezone
+        start_time_str, end_time_str = None, None
+        try:
+            if schedule.start_time:
+                start_dt = datetime.combine(datetime.today(), schedule.start_time)
+                start_time_local = utc.localize(start_dt).astimezone(viewer_tz).time()
+                start_time_str = start_time_local.strftime('%H:%M %Z')
+            if schedule.end_time:
+                end_dt = datetime.combine(datetime.today(), schedule.end_time)
+                end_time_local = utc.localize(end_dt).astimezone(viewer_tz).time()
+                end_time_str = end_time_local.strftime('%H:%M %Z')
+
+            # Construct schedule entry
+            if start_time_str and end_time_str:
+                entry = f"{start_time_str} - {end_time_str}"
+            else:
+                entry = "No Schedule"
+
+            if schedule.is_virtual:
+                entry += "\n (Virtual)"
+            if schedule.is_unavailable:
+                entry = "Unavailable"
+
+            # If user has a time-off entry for this day, override it
+            if user_id in time_off_data and day in time_off_data[user_id]:
+                entry = time_off_data[user_id][day]
+
+            schedule_data[user_id]["schedule"][day] = entry
+        except Exception as e:
+            return jsonify({'message': f"Error converting schedule times: {e}"}), 500
+
+    # Convert data into a Pandas DataFrame
+    schedule_rows = []
+    for user_id, details in schedule_data.items():
+        row = [details["user"]] + [details["schedule"][day] for day in day_date_mapping.keys()]
+        schedule_rows.append(row)
+
+    df = pd.DataFrame(schedule_rows, columns=["Employee"] + days_of_week)
+
+    # Apply Pandas Styler
+    def highlight_virtual(val):
+        """Styles Virtual Workdays in Light Blue"""
+        return 'background-color: #dbeafe' if "(Virtual)" in val else ''
+
+    def highlight_unavailable(val):
+        """Styles Unavailable Days in Light Red"""
+        return 'background-color: #ffcccc' if "Unavailable" in val else ''
+    
+    def highlight_off(val):
+        """Styles Days Off in Light Yellow"""
+        return 'background-color: #fff3c4' if "Day Off" in val else ''
+
+    styled_df = df.style.map(highlight_virtual).map(highlight_unavailable).map(highlight_off) \
+        .set_caption(f"Weekly Schedule ({tz_name})") \
+        .set_properties(**{'text-align': 'center', 'border': '2px solid black'}) \
+        .set_table_styles([
+            {'selector': 'caption', 'props': [('font-size', '16px'), ('font-weight', 'bold')]}
+        ])
+
+    # Save the styled dataframe as an image
+    img_io = io.BytesIO()
+    dfi.export(styled_df, img_io, table_conversion="matplotlib", dpi=200)
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
