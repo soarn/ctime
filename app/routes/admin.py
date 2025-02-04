@@ -231,6 +231,8 @@ def manage_admin(user_id):
     user_form = AdminUserForm(obj=user)
 
     if request.method == "POST" and user_form.validate_on_submit():
+        old_role = user.role  # Store current role before updating
+
         user.first_name = user_form.first_name.data
         user.last_name = user_form.last_name.data
         user.username = user_form.username.data
@@ -243,6 +245,11 @@ def manage_admin(user_id):
         try:
             db.session.commit()
             flash("Admin details updated successfully.", "success")
+
+            # If the admin is demoted to user, redirect to `manage_user`
+            if old_role == "admin" and user_form.role.data != "admin":
+                return redirect(url_for("admin.update_user", user_id=user_id))
+                
         except Exception as e:
             logger.error(f"Error updating admin details for {user_id}: {e}")
             flash("An error occurred while updating admin details.", "danger")

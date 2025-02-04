@@ -1,5 +1,5 @@
-<!-- Employees Grid/List Section -->
-<h2 class="mt-4">Employees
+<!-- Users Grid/List Section -->
+<h2 class="mt-4">Users
     <button id="toggleViewBtn" class="btn btn-outline-secondary" onclick="toggleView()" alt="Toggle View"
         title="Toggle View" type="button">
         <i id="toggleViewIcon" class="bi bi-layout-text-sidebar"></i>
@@ -9,7 +9,7 @@
 
     <!-- Grid View -->
     <div id="user-grid" class="row">
-        {% for user in users %}
+        {% for user in all_users %}
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm mb-4">
                 <div class="card-body text-center">
@@ -17,11 +17,26 @@
                         <img src="{{ get_gravatar_url(user.email) }}" alt="User Gravatar" class="rounded-circle"
                             width="80" height="80">
                     </div>
-                    <h5 class="card-title mb-2">{{ user.first_name }} {{ user.last_name}}</h5>
-                    <a href="{{ url_for('admin.update_user', user_id=user.id) }}"
-                        class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-calendar-check me-1"></i>Manage Schedule
+                    <h5 class="card-title mb-2">{{ user.first_name }} {{ user.last_name }}</h5>
+
+                    <!-- Role Badge -->
+                    {% if user.role == "admin" %}
+                    <span class="badge bg-danger"><i class="bi bi-shield-lock me-1"></i> Admin</span>
+                    {% else %}
+                    <span class="badge bg-primary"><i class="bi bi-person me-1"></i> User</span>
+                    {% endif %}
+                    
+                    {% if user.role == "admin" %}
+                    <a href="{{ url_for('admin.manage_admin', user_id=user.id) }}"
+                        class="btn btn-primary btn-sm w-100 mt-2">
+                        <i class="bi bi-person-gear me-1"></i> Manage Admin
                     </a>
+                    {% else %}
+                    <a href="{{ url_for('admin.update_user', user_id=user.id) }}"
+                        class="btn btn-primary btn-sm w-100 mt-2">
+                        <i class="bi bi-person-gear me-1"></i> Manage User
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -31,16 +46,29 @@
     <!-- List View -->
     <div id="user-list" class="d-none">
         <ul class="list-group shadow-sm">
-            {% for user in users %}
+            {% for user in all_users %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span>
                     <img src="{{ get_gravatar_url(user.email) }}" alt="User Gravatar" class="rounded-circle me-2"
                         width="40" height="40">
                     {{ user.first_name }} {{ user.last_name}}
+
+                    <!-- Role Badge -->
+                    {% if user.role == "admin" %}
+                    <span class="badge bg-danger"><i class="bi bi-shield-lock me-1"></i> Admin</span>
+                    {% else %}
+                    <span class="badge bg-primary"><i class="bi bi-person me-1"></i> User</span>
+                    {% endif %}
                 </span>
-                <a href="{{ url_for('admin.update_user', user_id=user.id) }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-calendar-plus me-1"></i>Manage Schedule
+                {% if user.role == "admin" %}
+                <a href="{{ url_for('admin.manage_admin', user_id=user.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-person-gear me-1"></i> Manage Admin
                 </a>
+                {% else %}
+                <a href="{{ url_for('admin.update_user', user_id=user.id) }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-person-gear me-1"></i> Manage User
+                </a>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
