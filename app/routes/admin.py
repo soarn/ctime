@@ -215,7 +215,6 @@ def update_user(user_id):
 
     return redirect(url_for("admin.admin_dashboard"))
 
-
 @admin.route("/admin_dashboard/manage_admin/<int:user_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
@@ -233,6 +232,15 @@ def manage_admin(user_id):
     if request.method == "POST" and user_form.validate_on_submit():
         old_role = user.role  # Store current role before updating
 
+        # Count current number of admins
+        total_admins = User.query.filter_by(role="admin").count()
+
+        # Prevent demotion if there's only one admin left
+        if old_role == "admin" and user_form.role.data != "admin" and total_admins <= 1:
+            flash("Cannot demote this admin. At least one admin account must remain.", "danger")
+            return redirect(url_for("admin.manage_admin", user_id=user_id))
+
+        # Apply updates
         user.first_name = user_form.first_name.data
         user.last_name = user_form.last_name.data
         user.username = user_form.username.data
