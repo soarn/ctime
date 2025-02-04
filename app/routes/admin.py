@@ -6,7 +6,7 @@ from pytz import utc
 import logging  
 from db.db_models import User, WeeklySchedule, TimeOffRequest
 from db.db import db
-from forms import AdminWeeklyScheduleForm, ApproveRejectForm
+from forms import AdminWeeklyScheduleForm, ApproveRejectForm, AdminUserForm
 from utils import get_user_timezone
 
 logger = logging.getLogger(__name__)
@@ -119,11 +119,10 @@ def handle_time_off():
             flash(f"Validation errors for {field}: {errors}", "danger")
         return redirect(url_for('admin.admin_dashboard'))
 
-# ADMIN: UPDATE SCHEDULE ROUTE
-@admin.route("/admin_dashboard/update_schedule/<int:user_id>", methods=["GET", "POST"])
+@admin.route("/admin_dashboard/update_user/<int:user_id>", methods=["GET", "POST"])
 @login_required
 @admin_required
-def update_schedule(user_id):
+def update_user(user_id):
     user = User.query.get_or_404(user_id)
 
     # Get admin's timezone
@@ -152,29 +151,64 @@ def update_schedule(user_id):
 
                 form.is_virtual.data = schedule.is_virtual
                 form.is_unavailable.data = schedule.is_unavailable
+        
+        # Create a User Management Form (for updating user details)
+        user_form = AdminUserForm(obj=user)
 
-        return render_template("add_schedule.html", user=user, forms=forms)
+        return render_template("manage_user.html", user=user, user_form=user_form, forms=forms)
 
-    # POST: Save schedule changes
-    forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
-    
-    for form in forms.values():
-        form.process(formdata=request.form)
+    # Identify which form was submitted
+    form_type = request.form.get("form_type")
 
-    if all(form.validate() for form in forms.values()):
-        WeeklySchedule.query.filter_by(user_id=user_id).delete()
+    if form_type == "user_form":
+        # Process User Management Updates
+        user_form = AdminUserForm(obj=user)
+        if user_form.validate_on_submit():
+            if current_user.id == user.id and user_form.role.data != "admin":
+                flash("You cannot remove your own admin privileges.", "danger")
+                return redirect(url_for("admin.update_user", user_id=user_id))
+            
+            user.first_name = user_form.first_name.data
+            user.last_name = user_form.last_name.data
+            user.username = user_form.username.data
+            user.email = user_form.email.data
+            user.role = user_form.role.data
 
-        for day, form in forms.items():
-            is_unavailable = form.is_unavailable.data
-            start_time_utc, end_time_utc = None, None
+            if user_form.password.data:
+                user.set_password(user_form.password.data) # Reset password
+            
+            try:
+                db.session.commit()
+                flash("User details updated successfully.", "success")
+            except Exception as e:
+                logger.error(f"Error updating user details for {user_id}: {e}")
+                flash("An error occurred while updating user details.", "danger")
 
-            if form.start_time.data and form.end_time.data and not is_unavailable:
-                start_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.start_time.data)).astimezone(utc).time()
-                end_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.end_time.data)).astimezone(utc).time()
+        return redirect(url_for("admin.update_user", user_id=user_id))
 
-            db.session.add(WeeklySchedule(user_id=user_id, day_of_week=day, start_time=start_time_utc, end_time=end_time_utc, is_virtual=form.is_virtual.data, is_unavailable=is_unavailable))
+    elif form_type == "schedule_form":
+        # Process Schedule Updates
+        forms = {day: AdminWeeklyScheduleForm(prefix=f"{user_id}_{day}") for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+        
+        for form in forms.values():
+            form.process(formdata=request.form)
 
-        db.session.commit()
-        flash("Schedule updated successfully.", "success")
+        if all(form.validate() for form in forms.values()):
+            WeeklySchedule.query.filter_by(user_id=user_id).delete()
+
+            for day, form in forms.items():
+                is_unavailable = form.is_unavailable.data
+                start_time_utc, end_time_utc = None, None
+
+                if form.start_time.data and form.end_time.data and not is_unavailable:
+                    start_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.start_time.data)).astimezone(utc).time()
+                    end_time_utc = viewer_tz.localize(datetime.combine(datetime.today(), form.end_time.data)).astimezone(utc).time()
+
+                db.session.add(WeeklySchedule(user_id=user_id, day_of_week=day, start_time=start_time_utc, end_time=end_time_utc, is_virtual=form.is_virtual.data, is_unavailable=is_unavailable))
+
+            db.session.commit()
+            flash("Schedule updated successfully.", "success")
+
+        return redirect(url_for("admin.update_user", user_id=user_id))
 
     return redirect(url_for("admin.admin_dashboard"))
