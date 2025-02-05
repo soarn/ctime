@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Manage Schedule{% endblock %}
+{% block title %}Manage User{% endblock %}
 {% block content %}
 
 <div class="container mt-5">
@@ -85,7 +85,7 @@
 
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover">
-                            <thead class="table-dark">
+                            <thead>
                                 <tr>
                                     <th><i class="bi bi-calendar2-week me-2"></i>Day</th>
                                     <th><i class="bi bi-clock-history me-2"></i>Start Time</th>
@@ -166,8 +166,19 @@
 </div>
 
 
-<a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary w-100 mt-3">Back to Dashboard</a>
+{% if 'manage_admin' not in request.referrer and 'update_user' not in request.referrer %}
+<a href="{{ request.referrer or url_for('admin.admin_dashboard') }}" class="btn btn-secondary w-100 mt-3">
+    <i class="bi bi-arrow-left me-2"></i>
+    Back to Schedule
+</a>
+{% else %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-secondary w-100 mt-3">
+    <i class="bi bi-arrow-left me-2"></i>
+    Back to Dashboard
+</a>
+{% endif %}
 </div>
+
 <script>
     function loadTemplate(template) {
         const schedule = {

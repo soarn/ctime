@@ -25,7 +25,7 @@
 <div class="card p-3 shadow-sm">
     <div class="table-responsive">
         <table class="table table-bordered align-middle table-hover">
-            <thead class="table-dark">
+            <thead>
                 <tr>
                     <th><i class="bi bi-calendar-event me-2"></i>Date</th>
                     <th><i class="bi bi-flag me-2"></i>Status</th>
@@ -39,7 +39,7 @@
                     <td>{{ request.date }}</td>
                     <td class="text-center align-middle">
                         {% if request.status == 'pending' %}
-                        <span class="badge bg-warning text-dark">
+                        <span class="badge bg-warning">
                             <i class="bi bi-hourglass-split me-1"></i>Pending</span>
                         {% elif request.status == 'approved' %}
                         <span class="badge bg-success">
