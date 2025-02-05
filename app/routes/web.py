@@ -331,6 +331,7 @@ def profile():
 # Generate API Key Route
 @web.route('/generate_api_key', methods=['POST'])
 @login_required
+@limiter.limit("3 per hour")
 def generate_api_key():
     """Allows a user to generate or reset their API key."""
     try:
