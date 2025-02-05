@@ -242,7 +242,7 @@ def get_schedules_image(user):
 
     schedules = WeeklySchedule.query.all()
     time_off_requests = TimeOffRequest.query.all()
-    users = {u.id: f"{u.first_name} {u.last_name}" for u in User.query.all()}
+    users = {u.id: f"{u.first_name} {u.last_name}" for u in User.query.filter_by(role='user').order_by(User.first_name, User.last_name).all()} # Sort by name
 
     # Get timezone from request args, default to UTC if not provided
     tz_name = request.args.get('timezone', 'UTC')

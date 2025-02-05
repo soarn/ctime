@@ -33,8 +33,8 @@ def admin_dashboard():
     approve_reject_form = ApproveRejectForm()
 
     # Fetch users and schedules
-    users = User.query.filter_by(role='user').all()
-    all_users = User.query.all()
+    users = User.query.filter_by(role='user').order_by(User.first_name, User.last_name).all() # Sort by name
+    all_users = User.query.order_by(User.role.asc(), User.first_name, User.last_name).all()
     # Only users have schedules, admins do not
     weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
     time_off_requests = TimeOffRequest.query.filter(TimeOffRequest.date >= datetime.today().date()).all() # Filter past dates

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_limiter import Limiter
@@ -25,7 +25,61 @@ limiter = Limiter(
 # HOME ROUTE
 @web.route("/")
 def home():
-    return render_template("home.html")
+    if current_user.is_authenticated:
+        return redirect(url_for("web.schedule"))
+    else:
+        return render_template("home.html")
+
+# SCHEDULE ROUTE
+@web.route("/schedule")
+@login_required
+def schedule():
+
+    # Fetch users and schedules
+    users = User.query.filter_by(role='user').order_by(User.first_name, User.last_name).all() # Sort by name
+    weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
+    time_off_requests = TimeOffRequest.query.filter(TimeOffRequest.date >= datetime.today().date()).all() # Filter past dates
+
+    # Calculate the current week's dates (Monday to Sunday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday()) # Start on Monday
+    week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
+
+    # Get the user's timezone
+    viewer_tz = get_user_timezone()
+
+    # Map schedules to users
+    user_schedule_mapping = {}
+    for user in users:
+        user_schedule_mapping[user.id] = {}
+        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+            schedule = next((s for s in weekly_schedules if s.user_id == user.id and s.day_of_week == day), None)
+            has_time_off = any(r for r in time_off_requests if r.user_id == user.id and r.date.strftime('%A') == day and r.status == 'approved')
+
+            # Convert times to viewer's timezone
+            try:
+                if schedule and schedule.start_time:
+                    schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                    schedule.start_time = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                if schedule and schedule.end_time:
+                    schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                    schedule.end_time = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+            except Exception as e:
+                logger.error(f"Error converting schedule times for user {user.id} on {day}: {e}")
+                flash(f"Error converting schedule times for user {user.id} on {day}.", "danger")
+
+            user_schedule_mapping[user.id][day] = {
+                'schedule': schedule,
+                'has_time_off': has_time_off,
+            }
+
+    return render_template(
+        "schedule.html",
+        users=users,
+        week_dates=week_dates,
+        user_schedule_mapping=user_schedule_mapping,
+        time_off_requests=time_off_requests
+    )
 
 # LOGIN ROUTE
 @web.route("/login", methods=["GET", "POST"])
