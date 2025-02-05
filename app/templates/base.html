@@ -87,12 +87,12 @@
       {% else %}
       <!-- Login/Register Buttons -->
       <div class="d-flex">
-        <a class="btn btn-outline-light me-2" href="{{ url_for('web.login') }}">
-          <i class="bi bi-box-arrow-in-right"></i> Login
-        </a>
-        <a class="btn btn-primary" href="{{ url_for('web.register') }}">
-          <i class="bi bi-person-plus-fill"></i> Register
-        </a>
+        <a href="{{ url_for('web.login') }}" class="btn btn-primary me-2">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Login
+      </a>
+      <a href="{{ url_for('web.register') }}" class="btn btn-outline-secondary">
+          <i class="bi bi-person-plus-fill me-2"></i> Register
+      </a>
       </div>
       {% endif %}
     </div>
