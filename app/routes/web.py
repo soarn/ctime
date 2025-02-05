@@ -299,7 +299,6 @@ def cancel_time_off():
     flash("Time off request cancelled.", "success")
     return redirect(url_for("web.employee_dashboard"))
 
-
 # Profile Route
 @web.route("/profile", methods=['GET', 'POST'])
 @login_required
