@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
     created_at    = db.Column(db.DateTime      , nullable    =False, default=lambda: datetime.now(timezone.utc)     )
     last_login    = db.Column(db.DateTime      , nullable    =True , default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     api_key       = db.Column(db.String   (64) , nullable    =True , unique=True                                    )
+    slack_username = db.Column(db.String(50), nullable=True, default=lambda context: context.get_current_parameters()['username'])
 
     # Hash the password before storing it
     def set_password(self, password):

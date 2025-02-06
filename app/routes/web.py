@@ -361,7 +361,7 @@ def profile():
     if form.validate_on_submit():
         # Check if username or email is taken by another user
         existing_user = User.query.filter(
-            (User.username == form.username.data) | (User.email == form.email.data),
+            (User.username == form.username.data) | (User.email == form.email.data) | (User.slack_username == form.slack_username.data),
             User.id != current_user.id
         ).first()
         if existing_user:
@@ -370,6 +370,7 @@ def profile():
         current_user.first_name = form.first_name.data
         current_user.last_name = form.last_name.data
         current_user.username = form.username.data
+        current_user.slack_username = form.slack_username.data
         current_user.email = form.email.data
         if form.password.data:
             current_user.set_password(form.password.data) # Hash and save the password

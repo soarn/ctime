@@ -82,13 +82,14 @@ class ProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(max=80)])
     email = EmailField('Email', validators=[DataRequired(), Email(), Length(max=100)])
     password   = PasswordField('Password', validators=[
-        DataRequired(),
+        Optional(),
         Length(min=8, message="Password must be at least 8 characters long"),
         Regexp(r'.*[A-Z]', message="Password must contain an uppercase letter"),
         Regexp(r'.*[a-z]', message="Password must contain a lowercase letter"),
         Regexp(r'.*[0-9]', message="Password must contain a number"),
         Regexp(r'.*[!@#$%^&*]', message="Password must contain a special character")
     ])
+    slack_username = StringField('Slack Username', validators=[Optional(), Length(max=50)])
     submit = SubmitField('Save Changes')
 
 # ADMIN: USER MANAGEMENT FORM
@@ -106,4 +107,5 @@ class AdminUserForm(FlaskForm):
         Regexp(r'.*[0-9]', message="Password must contain a number"),
         Regexp(r'.*[!@#$%^&*]', message="Password must contain a special character")
     ])
+    slack_username = StringField("Slack Username", validators=[Optional(), Length(max=50)])
     submit = SubmitField("Update User")

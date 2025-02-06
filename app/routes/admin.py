@@ -161,10 +161,19 @@ def update_user(user_id):
         user_form = AdminUserForm(obj=user)
         if user_form.validate_on_submit():
             old_role = user.role  # Store the previous role
+            # Check if username or email is taken by another user
+            existing_user = User.query.filter(
+                (User.username == user_form.username.data) | (User.email == user_form.email.data) | (User.slack_username == user_form.slack_username.data),
+                User.id != user.id
+            ).first()
+            if existing_user:
+                flash('Username or email is already taken.', 'danger')
+                return redirect(url_for("admin.update_user", user_id=user_id))
 
             user.first_name = user_form.first_name.data
             user.last_name = user_form.last_name.data
             user.username = user_form.username.data
+            user.slack_username = user_form.slack_username.data
             user.email = user_form.email.data
             user.role = user_form.role.data
 

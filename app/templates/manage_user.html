@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Manage User{% endblock %}
+{% block title %}Manage User: {{ user.first_name }} {{ user.last_name }}{% endblock %}
 {% block content %}
 
 <div class="container mt-5">
@@ -9,7 +9,6 @@
         <div class="col-md-4">
             <div class="card shadow">
                 <div class="card-body">
-                    <h4 class="text-center">User Details</h4>
                     <div class="text-center mb-4">
                         <img src="{{ get_gravatar_url(user.email) }}" alt="User Gravatar"
                             class="rounded-circle gravatar-img">
@@ -30,10 +29,38 @@
                             {{ user_form.last_name(class="form-control") }}
                         </div>
 
+                        {% if is_mobile %}
+
                         <div class="mb-3">
                             {{ user_form.username.label(class_="form-label") }}
-                            {{ user_form.username(class_="form-control") }}
+                            {{ user_form.username(class_="form-control", placeholder="Username") }}
                         </div>
+
+                        <div class="mb-3">
+                            {{ user_form.slack_username.label(class_="form-label") }}
+                            <div class="input-group">
+                                <span class="input-group-text">@</span>
+                                {{ user_form.slack_username(class_="form-control", placeholder="Slack Username") }}
+                            </div>
+                        </div>
+
+                        {% else %}
+
+                        <div class="mb-3 row">
+                            <div class="col-md-6">
+                                {{ user_form.username.label(class_="form-label") }}
+                                {{ user_form.username(class_="form-control", placeholder="Username") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ user_form.slack_username.label(class_="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">@</span>
+                                    {{ user_form.slack_username(class_="form-control", placeholder="Slack Username") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% endif %}
 
                         <div class="mb-3">
                             {{ user_form.email.label(class_="form-label") }}
