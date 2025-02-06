@@ -166,13 +166,11 @@
                                             </label>
                                         </div>
                                         <div class="form-check form-switch mt-2">
-                                            {{ form.is_unavailable(class_="form-check-input", id=day ~
-                                            "-is_unavailable", onchange="toggleAvailability(this, '{{ day }}')") }}
+                                            {{ form.is_unavailable(class_="form-check-input", id=day ~ "-is_unavailable") }}
                                             <label class="form-check-label" for="{{ day }}-is_unavailable">
-                                                <i class="bi bi-calendar-x me-1"></i>
-                                                Unavailable
+                                                <i class="bi bi-calendar-x me-1"></i> Unavailable
                                             </label>
-                                        </div>
+                                        </div>                                        
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -264,7 +262,8 @@
 
     document.addEventListener("DOMContentLoaded", () => {
         // Function to toggle availability dynamically
-        function toggleAvailability(checkbox, day) {
+        function toggleAvailability(checkbox) {
+            const day = checkbox.dataset.day; // Read data attribute
             const startTime = document.getElementById(`${day}-start_time`);
             const endTime = document.getElementById(`${day}-end_time`);
             const isUnavailable = checkbox.checked;
@@ -281,15 +280,17 @@
         }
 
         // Attach event listeners to all "Unavailable" checkboxes
-        const unavailableCheckboxes = document.querySelectorAll('[id$="-is_unavailable"]');
-        unavailableCheckboxes.forEach((checkbox) => {
-            const day = checkbox.id.split("-")[0];
+        document.querySelectorAll('[id$="-is_unavailable"]').forEach((checkbox) => {
+            const day = checkbox.id.split("-")[0]; // Extract the day name
+            checkbox.dataset.day = day; // Store day in data attribute
 
             // Initialize the toggle state on page load
-            toggleAvailability(checkbox, day);
+            toggleAvailability(checkbox);
 
             // Add event listener for dynamic changes
-            checkbox.addEventListener("change", () => toggleAvailability(checkbox, day));
+            checkbox.addEventListener("change", function () {
+                toggleAvailability(this);
+            });
         });
     });
 

@@ -241,13 +241,13 @@ def manage_admin(user_id):
     if request.method == "POST" and user_form.validate_on_submit():
         old_role = user.role  # Store current role before updating
 
-        # Count current number of admins
-        total_admins = User.query.filter_by(role="admin").count()
-
-        # Prevent demotion if there's only one admin left
-        if old_role == "admin" and user_form.role.data != "admin" and total_admins <= 1:
-            flash("Cannot demote this admin. At least one admin account must remain.", "danger")
-            return redirect(url_for("admin.manage_admin", user_id=user_id))
+        # Use SELECT FOR UPDATE to prevent race conditions
+        with db.session.begin():
+            total_admins = db.session.query(User).filter_by(role="admin").with_for_update().count()
+            # Prevent demotion if there's only one admin left
+            if old_role == "admin" and user_form.role.data != "admin" and total_admins <= 1:
+                flash("Cannot demote this admin. At least one admin account must remain.", "danger")
+                return redirect(url_for("admin.manage_admin", user_id=user_id))
 
         # Apply updates
         user.first_name = user_form.first_name.data
