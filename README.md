@@ -8,6 +8,8 @@
     - [x] Allow for comments/brief descriptions of why
     - [ ] All requests are subject to approval based on company needs
     - [ ] Blockout dates, Minimum Notice Periods, Maximum number of consecutive days off
+    - [ ] Unknown error occurs if request off is for the current day, need to have this fixed.
+    - [ ] Days are not controlled by timezone which could introduce issues in the future
   - [x] Edit their profile
   - [x] Dashboard
     - [x] Information on next shift
@@ -17,7 +19,7 @@
   - [x] Create schedule/availability for users
     - [ ] Pagination on list/grid of users
   - [x] Approve/Reject days off
-  - [ ] Edit user profiles
+  - [x] Edit user profiles
   - [x] Dashboard
     - [ ] Information on company/team
     - [x] Full schedule
