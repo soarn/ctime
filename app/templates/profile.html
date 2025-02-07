@@ -1,57 +1,153 @@
 {% extends 'base.html' %}
 {% block title %}Profile - ctime Scheduler{% endblock %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Your Profile</h1>
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-body">
-                    <div class="text-center mb-4">
-                        <img 
-                            src="{{ get_gravatar_url(current_user.email) }}" 
-                            alt="User Gravatar" 
-                            class="rounded-circle gravatar-img">
-                        <h3 class="mt-3">{{ current_user.first_name }} {{ current_user.last_name }}</h3>
-                        <p class="text-muted">{{ current_user.email }}</p>
-                    </div>
-                    <form method="post" action="{{ url_for('web.profile') }}">
-                        {{ form.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ form.first_name.label(class_="form-label") }}
-                            {{ form.first_name(class_="form-control", placeholder="First Name") }}
+
+<body class="mb-2">
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Your Profile</h1>
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <img src="{{ get_gravatar_url(current_user.email) }}" alt="User Gravatar"
+                                class="rounded-circle gravatar-img">
+                            <h3 class="mt-3">{{ current_user.first_name }} {{ current_user.last_name }}</h3>
+                            <p class="text-muted">{{ current_user.email }}</p>
                         </div>
-                        <div class="mb-3">
-                            {{ form.last_name.label(class_="form-label") }}
-                            {{ form.last_name(class_="form-control", placeholder="Last Name") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.username.label(class_="form-label") }}
-                            {{ form.username(class_="form-control", placeholder="Username") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.email.label(class_="form-label") }}
-                            {{ form.email(class_="form-control", placeholder="Email") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ form.password.label(class_="form-label") }}
-                            {{ form.password(
-                                class_="form-control", 
-                                type="password", 
+                        <form method="post" action="{{ url_for('web.profile') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ form.first_name.label(class_="form-label") }}
+                                {{ form.first_name(class_="form-control", placeholder="First Name") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.last_name.label(class_="form-label") }}
+                                {{ form.last_name(class_="form-control", placeholder="Last Name") }}
+                            </div>
+                            {% if is_mobile %}
+                            <div class="mb-3">
+                                {{ form.username.label(class_="form-label") }}
+                                {{ form.username(class_="form-control", placeholder="Username") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.slack_username.label(class_="form-label") }}
+                                <div class="input-group">
+                                    <span class="input-group-text">@</span>
+                                    {{ form.slack_username(class_="form-control", placeholder="Slack Username") }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="mb-3 row">
+                                <div class="col-md-6">
+                                    {{ form.username.label(class_="form-label") }}
+                                    {{ form.username(class_="form-control", placeholder="Username") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.slack_username.label(class_="form-label") }}
+                                    <div class="input-group">
+                                        <span class="input-group-text">@</span>
+                                        {{ form.slack_username(class_="form-control", placeholder="Slack Username") }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                {{ form.email.label(class_="form-label") }}
+                                {{ form.email(class_="form-control", placeholder="Email") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.password.label(class_="form-label") }}
+                                {{ form.password(
+                                class_="form-control",
+                                type="password",
                                 placeholder="Update Password (optional)",
                                 autocomplete="new-password",
                                 minlength="8",
                                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}",
-                                title="Must contain at least one number, one uppercase and lowercase letter, and at least 8 characters"
-                            ) }}
-                        </div>
-                        <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                        </div>
-                    </form>
+                                title="Must contain at least one number, one uppercase and lowercase letter, and at
+                                least 8 characters"
+                                ) }}
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                        <hr>
+                        <h3 id="apiKeySection">API Key</h3>
+                        <form method="POST" action="{{ url_for('web.generate_api_key') }}">
+                            {{ form.hidden_tag() }}
+                            <div class="input-group mb-3">
+                                <input type="password" id="apiKey" class="form-control"
+                                    value="{{ current_user.api_key or 'Not generated yet'}}" readonly>
+                                <label for="apiKey" class="visually-hidden">API Key</label>
+                                <button type="button" class="btn btn-outline-secondary" id="toggleApiKey"
+                                    title="Show/Hide API Key">
+                                    <i class="bi bi-eye-slash" id="toggleIcon"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="copyApiKey">
+                                    <i class="bi bi-clipboard"></i> Copy
+                                </button>
+                            </div>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-key-fill me-2"></i>Generate API Key
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        document.getElementById('toggleApiKey').addEventListener('click', function () {
+            const apiKeyField = document.getElementById('apiKey');
+            const toggleIcon = document.getElementById('toggleIcon');
+            if (apiKeyField.type === 'password') {
+                apiKeyField.type = 'text';
+                toggleIcon.classList.remove('bi-eye-slash');
+                toggleIcon.classList.add('bi-eye');
+            } else {
+                apiKeyField.type = 'password';
+                toggleIcon.classList.remove('bi-eye');
+                toggleIcon.classList.add('bi-eye-slash');
+            }
+        });
+
+        document.getElementById('copyApiKey').addEventListener('click', function () {
+            const apiKeyField = document.getElementById('apiKey');
+            apiKeyField.select();
+            apiKeyField.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(apiKeyField.value);
+
+            // Check if a badge already exists
+            let existingBadge = document.querySelector('#apiKeySection .badge');
+            if (existingBadge) {
+            // Reset the fade out timer if badge exists
+            clearTimeout(existingBadge.fadeTimeout);
+            existingBadge.classList.remove('fade');
+            existingBadge.fadeTimeout = setTimeout(function () {
+                existingBadge.classList.add('fade');
+                setTimeout(function () {
+                existingBadge.remove();
+                }, 1500);
+            }, 3000);
+            } else {
+            // Create new badge if it doesn't exist
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-success ms-2';
+            badge.innerText = 'Copied!';
+            document.getElementById('apiKeySection').appendChild(badge);
+
+            // Fade out after 3 seconds
+            badge.fadeTimeout = setTimeout(function () {
+                badge.classList.add('fade');
+                setTimeout(function () {
+                badge.remove();
+                }, 1500);
+            }, 3000);
+            }
+        });
+    </script>
+</body>
 {% endblock %}

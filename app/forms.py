@@ -1,6 +1,6 @@
-import datetime
+from datetime import datetime
 from flask_wtf import FlaskForm
-from wtforms import DateField, StringField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, TextAreaField, TimeField, ValidationError
+from wtforms import DateField, StringField, HiddenField, SubmitField, PasswordField, EmailField, BooleanField, TextAreaField, TimeField, ValidationError, SelectField
 from wtforms.validators import DataRequired, Email, Length, Optional, Regexp, AnyOf
 
 # WEB: LOGIN FORM
@@ -82,11 +82,30 @@ class ProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(max=80)])
     email = EmailField('Email', validators=[DataRequired(), Email(), Length(max=100)])
     password   = PasswordField('Password', validators=[
-        DataRequired(),
+        Optional(),
         Length(min=8, message="Password must be at least 8 characters long"),
         Regexp(r'.*[A-Z]', message="Password must contain an uppercase letter"),
         Regexp(r'.*[a-z]', message="Password must contain a lowercase letter"),
         Regexp(r'.*[0-9]', message="Password must contain a number"),
         Regexp(r'.*[!@#$%^&*]', message="Password must contain a special character")
     ])
+    slack_username = StringField('Slack Username', validators=[Optional(), Length(max=50)])
     submit = SubmitField('Save Changes')
+
+# ADMIN: USER MANAGEMENT FORM
+class AdminUserForm(FlaskForm):
+    first_name = StringField("First Name", validators=[DataRequired(), Length(max=50)])
+    last_name = StringField("Last Name", validators=[DataRequired(), Length(max=50)])
+    username = StringField("Username", validators=[DataRequired(), Length(max=80)])
+    email = StringField("Email", validators=[DataRequired(), Email(), Length(max=100)])
+    role = SelectField("Role", choices=[("user", "User"), ("admin", "Admin")], validators=[DataRequired()])
+    password = PasswordField("New Password (optional)", validators=[
+        Optional(),
+        Length(min=8, message="Password must be at least 8 characters long"),
+        Regexp(r'.*[A-Z]', message="Password must contain an uppercase letter"),
+        Regexp(r'.*[a-z]', message="Password must contain a lowercase letter"),
+        Regexp(r'.*[0-9]', message="Password must contain a number"),
+        Regexp(r'.*[!@#$%^&*]', message="Password must contain a special character")
+    ])
+    slack_username = StringField("Slack Username", validators=[Optional(), Length(max=50)])
+    submit = SubmitField("Update User")

@@ -10,6 +10,7 @@ from db.db_models import User
 from routes.web import web
 from routes.admin import admin
 from routes.globals import globals
+from routes.api_v1 import api_v1
 from utils import get_gravatar_url, get_user_timezone
 
 class Config:
@@ -62,7 +63,20 @@ def create_app():
         ],
         'static_url_path': '/flasgger_static',
         'swagger_ui': True if os.getenv('FLASK_ENV') != 'production' else False,
-        'specs_route': '/docs'
+        'specs_route': '/docs',
+        'securityDefinitions': {
+            'APIKeyAuth': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+                'description': 'Enter your API key as: Bearer <API_KEY>'
+            }
+        },
+        'security': [
+            {
+                'APIKeyAuth': []
+            }
+        ]
     }
     swagger = Swagger(app, config=swagger_config)
 
@@ -84,6 +98,7 @@ def create_app():
     app.register_blueprint(globals)
     app.register_blueprint(web)
     app.register_blueprint(admin)
+    app.register_blueprint(api_v1, url_prefix='/api/v1')
 
     # Initialize Login Manager
     login_manager = LoginManager(app)

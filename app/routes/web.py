@@ -1,4 +1,4 @@
-from datetime import datetime, timezone as tz
+from datetime import datetime, timedelta, timezone as tz
 from flask import Blueprint, render_template, request, redirect, flash, url_for, get_flashed_messages
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_limiter import Limiter
@@ -25,7 +25,61 @@ limiter = Limiter(
 # HOME ROUTE
 @web.route("/")
 def home():
-    return render_template("home.html")
+    if current_user.is_authenticated:
+        return redirect(url_for("web.schedule"))
+    else:
+        return render_template("home.html")
+
+# SCHEDULE ROUTE
+@web.route("/schedule")
+@login_required
+def schedule():
+
+    # Fetch users and schedules
+    users = User.query.filter_by(role='user').order_by(User.first_name, User.last_name).all() # Sort by name
+    weekly_schedules = WeeklySchedule.query.join(User).filter(User.role == 'user').all()
+    time_off_requests = TimeOffRequest.query.filter(TimeOffRequest.date >= datetime.today().date()).all() # Filter past dates
+
+    # Calculate the current week's dates (Monday to Sunday)
+    today = datetime.today()
+    start_of_week = today - timedelta(days=today.weekday()) # Start on Monday
+    week_dates = [(start_of_week + timedelta(days=i)) for i in range(7)]
+
+    # Get the user's timezone
+    viewer_tz = get_user_timezone()
+
+    # Map schedules to users
+    user_schedule_mapping = {}
+    for user in users:
+        user_schedule_mapping[user.id] = {}
+        for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+            schedule = next((s for s in weekly_schedules if s.user_id == user.id and s.day_of_week == day), None)
+            has_time_off = any(r for r in time_off_requests if r.user_id == user.id and r.date.strftime('%A') == day and r.status == 'approved')
+
+            # Convert times to viewer's timezone
+            try:
+                if schedule and schedule.start_time:
+                    schedule_start_datetime = datetime.combine(datetime.today(), schedule.start_time)
+                    schedule.start_time = utc.localize(schedule_start_datetime).astimezone(viewer_tz).time()
+                if schedule and schedule.end_time:
+                    schedule_end_datetime = datetime.combine(datetime.today(), schedule.end_time)
+                    schedule.end_time = utc.localize(schedule_end_datetime).astimezone(viewer_tz).time()
+            except Exception as e:
+                logger.error(f"Error converting schedule times for user {user.id} on {day}: {e}")
+                flash(f"Error converting schedule times for user {user.id} on {day}.", "danger")
+
+            user_schedule_mapping[user.id][day] = {
+                'schedule': schedule,
+                'has_time_off': has_time_off,
+            }
+
+    return render_template(
+        "schedule.html",
+        users=users,
+        week_dates=week_dates,
+        user_schedule_mapping=user_schedule_mapping,
+        time_off_requests=time_off_requests
+    )
 
 # LOGIN ROUTE
 @web.route("/login", methods=["GET", "POST"])
@@ -141,6 +195,9 @@ def employee_dashboard():
     # Get the user's timezone
     viewer_tz = get_user_timezone()
 
+    # Get today's date in the user's timezone
+    today = datetime.now(viewer_tz).date()
+
     # Fetch existing schedules
     try:
         existing_schedules = {s.day_of_week: s for s in WeeklySchedule.query.filter_by(user_id=user_id).all()}
@@ -168,7 +225,7 @@ def employee_dashboard():
                     form.end_time.data = schedule_end_time_local
             except Exception as e:
                 logger.error(f"Error converting schedule times for user {user_id} on {day}: {e}")
-                flash(f"Error converting schedule times for {day}.", "danger")
+                flash(f"Error converting schedule times for {day}.", "danger") 
 
             form.day_of_week.data = day
             form.is_virtual.data = schedule.is_virtual
@@ -181,7 +238,8 @@ def employee_dashboard():
         schedule_forms=schedule_forms,
         time_off_form=time_off_form,
         time_off_requests=time_off_requests,
-        cancel_time_off_form=cancel_time_off_form
+        cancel_time_off_form=cancel_time_off_form,
+        today=today
     )
 
 # Update Schedule Route
@@ -295,7 +353,6 @@ def cancel_time_off():
     flash("Time off request cancelled.", "success")
     return redirect(url_for("web.employee_dashboard"))
 
-
 # Profile Route
 @web.route("/profile", methods=['GET', 'POST'])
 @login_required
@@ -304,7 +361,7 @@ def profile():
     if form.validate_on_submit():
         # Check if username or email is taken by another user
         existing_user = User.query.filter(
-            (User.username == form.username.data) | (User.email == form.email.data),
+            (User.username == form.username.data) | (User.email == form.email.data) | (User.slack_username == form.slack_username.data),
             User.id != current_user.id
         ).first()
         if existing_user:
@@ -313,6 +370,7 @@ def profile():
         current_user.first_name = form.first_name.data
         current_user.last_name = form.last_name.data
         current_user.username = form.username.data
+        current_user.slack_username = form.slack_username.data
         current_user.email = form.email.data
         if form.password.data:
             current_user.set_password(form.password.data) # Hash and save the password
@@ -324,3 +382,24 @@ def profile():
             flash('An error occurred while updating your profile. Please try again.', 'danger')
         return redirect(url_for('web.profile'))
     return render_template('profile.html', form=form)
+
+# Generate API Key Route
+@web.route('/generate_api_key', methods=['POST'])
+@login_required
+@limiter.limit("3 per hour")
+def generate_api_key():
+    """Allows a user to generate or reset their API key."""
+    try:
+        # Ensure the user doesn't spam key resets
+        if current_user.api_key:
+            flash("Your API key has been regenerated.", "warning")
+        else:
+            flash("API key generated successfully.", "success")
+        
+        current_user.generate_api_key()
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Error generating API key: {e}")
+        flash("An error occurred while generating your API key. Please try again.", "danger")
+    
+    return redirect(url_for('web.profile'))
