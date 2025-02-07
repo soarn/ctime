@@ -14,13 +14,17 @@ COPY . /app
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Switch to non-root user
+RUN adduser --disabled-password ctime-user
+USER ctime-user
+
 # Expose the port Flask runs on
 EXPOSE 5000
 
 # Set environment variables (will be overridden in production)
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
-ENV DATABASE_URL=mysql+pymysql://root:password@db:3306/ctime
+ENV DATABASE_URL=mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
 
 # Run the application
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
