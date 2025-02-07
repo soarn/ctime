@@ -242,7 +242,7 @@ def manage_admin(user_id):
         old_role = user.role  # Store current role before updating
 
         # Use SELECT FOR UPDATE to prevent race conditions
-        with db.session.begin():
+        with db.session.begin_nested():
             total_admins = db.session.query(User).filter_by(role="admin").with_for_update().count()
             # Prevent demotion if there's only one admin left
             if old_role == "admin" and user_form.role.data != "admin" and total_admins <= 1:
