@@ -20,12 +20,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      FLASK_ENV: development
-      DATABASE_URL: mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
+      FLASK_ENV: production
+      CONNECTION_STRING: mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
+      SECRET_KEYL: <YOUR_SECRET_KEY>
     volumes:
       - .:/app
-    command: ["flask", "run", "--host=0.0.0.0"]
+    command: >
+      sh -c 'gunicorn -b 0.0.0.0:5000 "app.app:create_app()"'
 
 volumes:
   mysql-data:
-

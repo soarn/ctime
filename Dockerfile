@@ -11,8 +11,7 @@ RUN apt-get update && apt-get install -y \
 COPY . /app
 
 # Install package dependencies
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Switch to non-root user
 RUN adduser --disabled-password ctime-user
@@ -22,9 +21,10 @@ USER ctime-user
 EXPOSE 5000
 
 # Set environment variables (will be overridden in production)
-ENV FLASK_APP=app.py
+ENV PYTHONPATH=/app
+ENV FLASK_APP=app.app
 ENV FLASK_ENV=production
 ENV DATABASE_URL=mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
 
 # Run the application
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "app.app:create_app()"]
