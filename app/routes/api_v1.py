@@ -5,8 +5,8 @@ from pytz import utc, timezone as tz
 import io
 import pandas as pd
 import dataframe_image as dfi
-from db.db_models import User, WeeklySchedule, TimeOffRequest
-from auth import api_key_required
+from app.db.db_models import User, WeeklySchedule, TimeOffRequest
+from app.auth import api_key_required
 
 api_v1 = Blueprint('api_v1', __name__, url_prefix='/api/v1')
 

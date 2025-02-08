@@ -1,6 +1,6 @@
 from functools import wraps
 from flask import request, jsonify
-from db.db_models import User
+from app.db.db_models import User
 
 def api_key_required(admin_only=False):
     """Decorator to require an API key for access."""

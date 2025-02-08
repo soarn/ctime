@@ -5,13 +5,13 @@ from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 import os
-from db.db import db
-from db.db_models import User
-from routes.web import web
-from routes.admin import admin
-from routes.globals import globals
-from routes.api_v1 import api_v1
-from utils import get_gravatar_url, get_user_timezone
+from app.db.db import db
+from app.db.db_models import User
+from app.routes.web import web
+from app.routes.admin import admin
+from app.routes.globals import globals
+from app.routes.api_v1 import api_v1
+from app.utils import get_gravatar_url, get_user_timezone
 
 class Config:
     @classmethod
@@ -90,6 +90,9 @@ def create_app():
     # Initialize the database
     # External call to prevent circular imports
     db.init_app(app)
+
+    with app.app_context():
+        db.create_all() # Create the database tables if they do not exist
     
     # Initialize Migrate
     migrate = Migrate(app, db)
@@ -120,4 +123,4 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     debug_mode = os.getenv('FLASK_ENV') != 'production'
-    app.run(debug=debug_mode)
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
