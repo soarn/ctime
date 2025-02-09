@@ -17,3 +17,4 @@ flask_limiter
 pytz
 pandas
 dataframe_image
+sentry-sdk[flask]

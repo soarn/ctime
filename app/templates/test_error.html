@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- A button to trigger a test error -->
+<button id="test-error">Trigger Test Error</button>
+<script>
+  const button = document.getElementById('test-error');
+  button.addEventListener('click', () => {
+    throw new Error('This is a test error');
+  });
+</script>
+{% endblock %}

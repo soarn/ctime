@@ -5,6 +5,7 @@ from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 import os
+import sentry_sdk
 from app.db.db import db
 from app.db.db_models import User
 from app.routes.web import web
@@ -97,6 +98,24 @@ def create_app():
     # Initialize Migrate
     migrate = Migrate(app, db)
 
+    # Initialize Sentry
+    sentry_sdk.init(
+    dsn="https://c8573b9f8ab4d45024aae9909d4353c3@o234159.ingest.us.sentry.io/4508790454681600",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for tracing.
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    _experiments={
+        # Set continuous_profiling_auto_start to True
+        # to automatically start the profiler on when
+        # possible.
+        "continuous_profiling_auto_start": True,
+        },
+    )
+
     # Register Blueprints
     app.register_blueprint(globals)
     app.register_blueprint(web)
@@ -123,4 +142,5 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     debug_mode = os.getenv('FLASK_ENV') != 'production'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    host = '0.0.0.0' if not debug_mode else 'localhost'
+    app.run(host=host, port=5000, debug=debug_mode)
