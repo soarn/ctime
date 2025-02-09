@@ -4,12 +4,10 @@ services:
     image: mysql:8
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ctime
-      MYSQL_USER: ctimeuser
-      MYSQL_PASSWORD: ctimepassword
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
   
@@ -20,13 +18,17 @@ services:
     ports:
       - "5000:5000"
     environment:
-      FLASK_ENV: production
-      CONNECTION_STRING: mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
-      SECRET_KEY: <YOUR_SECRET_KEY>
+      FLASK_ENV: ${FLASK_ENV}
+      CONNECTION_STRING: mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
+      SECRET_KEY: ${SECRET_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_SEND_PII: ${SENTRY_SEND_PII}
+      SENTRY_TRACE_SAMPLE_RATE: ${SENTRY_TRACE_SAMPLE_RATE}
+      SENTRY_PROFILE_SAMPLE_RATE: ${SENTRY_PROFILE_SAMPLE_RATE}
     volumes:
-      - .:/app
+      - ./app:/app/app
     command: >
       sh -c 'gunicorn -b 0.0.0.0:5000 "app.app:create_app()"'
 
-volumes:
+  volumes:
   mysql-data:
