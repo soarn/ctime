@@ -22,7 +22,7 @@ services:
     environment:
       FLASK_ENV: production
       CONNECTION_STRING: mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
-      SECRET_KEYL: <YOUR_SECRET_KEY>
+      SECRET_KEY: <YOUR_SECRET_KEY>
     volumes:
       - .:/app
     command: >
