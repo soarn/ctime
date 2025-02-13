@@ -143,6 +143,16 @@ def create_app():
     app.jinja_env.globals.update(get_gravatar_url=get_gravatar_url)
     app.jinja_env.globals.update(get_user_timezone=get_user_timezone)
     
+    # Explicitly Enable CSRF Protection
+    app.config.update({
+        "WTF_CSRF_ENABLED": True,
+        "WTF_CSRF_TIME_LIMIT": None, # Avoid CSRF token expiration issues
+        "SESSION_COOKIE_SECURE": True, # Ensures secure cookies over HTTPS
+        "SESSION_COOKIE_HTTPONLY": True,
+        "SESSION_COOKIE_SAMESITE": "Lax", # Ensures CSRF token is sent properly
+    })
+
+
     return app
 
 if __name__ == '__main__':
