@@ -12,6 +12,7 @@ from app.routes.web import web
 from app.routes.admin import admin
 from app.routes.globals import globals
 from app.routes.api_v1 import api_v1
+from app.health import health
 from app.utils import get_gravatar_url, get_user_timezone
 
 class Config:
@@ -127,6 +128,7 @@ def create_app():
     app.register_blueprint(web)
     app.register_blueprint(admin)
     app.register_blueprint(api_v1, url_prefix='/api/v1')
+    app.register_blueprint(health)
 
     # Initialize Login Manager
     login_manager = LoginManager(app)
