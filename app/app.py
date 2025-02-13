@@ -40,8 +40,14 @@ class ProductionConfig(Config):
     @classmethod
     def validate_config(cls):
         super().validate_config()
-        if os.getenv('FLASK_ENV') == 'production' and not os.getenv('CONNECTION_STRING', '').startswith('mysql+ssl://'):
-            raise ValueError("Production environment requires SSL database connection")
+
+        # Enforce SSL database connection
+        conn_string = os.getenv('CONNECTION_STRING', '')
+        if os.getenv('FLASK_ENV') == 'production':
+            if not conn_string.startswith('mysql+pymysql://'):
+                raise ValueError("CONNECTION_STRING must start with 'mysql+pymysql://'")
+            if '?ssl_ca=' not in conn_string:
+                raise ValueError("Production requires SSL connections to the database")
 
 def create_app():
 
