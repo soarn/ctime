@@ -22,6 +22,7 @@ fi
 echo "OKAY: SSL certificate file found at $SSL_CA_PATH"
 
 export CONNECTION_STRING="mysql+mysqlconnector://$DB_USER:$DB_PASS@$DB_HOST:3306/$DB_NAME?ssl_ca=$SSL_CA_PATH"
+echo "CONNECTION_STRING=$CONNECTION_STRING"
 
 export PYTHONPATH=/app
 export FLASK_APP=app.app
