@@ -5,7 +5,6 @@ pytest
 gunicorn
 flasgger
 jinja2
-pymysql
 flask_login
 requests
 cryptography
@@ -18,3 +17,4 @@ pytz
 pandas
 dataframe_image
 sentry-sdk[flask]
+mysql-connector-python

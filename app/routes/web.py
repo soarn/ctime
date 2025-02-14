@@ -406,9 +406,12 @@ def generate_api_key():
 
 # Test Sentry
 @web.route("/error")
-def hello():
+@login_required
+def test_error():
     division_by_zero = 1 / 0
     return "Hello, World!"
+
 @web.route("/error2")
-def hello2():
+@login_required
+def test_error_template():
     return render_template('test_error.html')

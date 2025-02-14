@@ -45,8 +45,8 @@ class ProductionConfig(Config):
         # Enforce SSL database connection
         conn_string = os.getenv('CONNECTION_STRING', '')
         if os.getenv('FLASK_ENV') == 'production':
-            if not conn_string.startswith('mysql+pymysql://'):
-                raise ValueError("CONNECTION_STRING must start with 'mysql+pymysql://'")
+            if not conn_string.startswith('mysql+mysqlconnector://'):
+                raise ValueError("CONNECTION_STRING must start with 'mysql+mysqlconnector://'")
             if '?ssl_ca=' not in conn_string:
                 raise ValueError("Production requires SSL connections to the database")
 

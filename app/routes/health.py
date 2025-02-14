@@ -3,11 +3,11 @@ from app.db.db import db
 
 health = Blueprint('health', __name__)
 
-@health.route('/heath')
+@health.route('/health')
 def health_check():
     try:
         # Check database connectivity
-        db.session.execute('SELECT 1')
+        db.session.execute('SELECT 1').scalar()
         return jsonify({
             'status': 'healthy',
             'database': 'connected'
