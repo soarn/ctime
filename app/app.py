@@ -12,7 +12,7 @@ from app.routes.web import web
 from app.routes.admin import admin
 from app.routes.globals import globals
 from app.routes.api_v1 import api_v1
-from app.health import health
+from app.routes.health import health
 from app.utils import get_gravatar_url, get_user_timezone
 
 class Config:
