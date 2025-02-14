@@ -1,13 +1,14 @@
 from flask import Blueprint, jsonify
+from sqlalchemy import text
 from app.db.db import db
 
 health = Blueprint('health', __name__)
 
-@health.route('/health')
+@health.route('/health', methods=['GET'])
 def health_check():
     try:
         # Check database connectivity
-        db.session.execute('SELECT 1').scalar()
+        db.session.execute(text("SELECT 1")).scalar()
         return jsonify({
             'status': 'healthy',
             'database': 'connected'
