@@ -8,11 +8,15 @@ type: Load Balanced Web Service
 
 # Distribute traffic to your service.
 http:
+  #  alias: ctime.soarn.dev
+  #  hosted_zone: Z0875881L8Y1JRN08KWT
+  #certificates:
+  # - arn:aws:acm:us-west-2:503561451862:certificate/6623f9bd-2e06-4c38-92d9-6b6533cc1ec6
   # Requests to this path will be forwarded to your service.
   # To match all requests you can use the "/" path.
   path: '/'
   # You can specify a custom health check path. The default is "/".
-  # healthcheck: '/'
+  healthcheck: '/health'
 
 # Configuration for your containers and service.
 image:
@@ -46,15 +50,17 @@ network:
 #    deployment:            # The deployment strategy for the "test" environment.
 #       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.
 
+# task_role: arn:aws:iam::503561451862:role/ctime-prod-ctime-app-TaskRole
+# execution_role: arn:aws:iam::503561451862:role/ctime-prod-ctime-app-TaskRole
+
 variables:
   FLASK_ENV: production
   PYTHONPATH: /app
-  FLASK_APP: app.app
-  SECRET_KEY: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SECRET_KEY
-  SENTRY_DSN: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SENTRY_DSN
-  SENTRY_SEND_PII: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SENTRY_SEND_PII
-  SENTRY_TRACE_SAMPLE_RATE: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SENTRY_TRACE_SAMPLE_RATE
-  SENTRY_PROFILE_SAMPLE_RATE: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/SENTRY_PROFILE_SAMPLE_RATE
 
 secrets:
-  DB_SECRET: /copilot/${COPILOT_APPLICATION_NAME}/${COPILOT_ENVIRONMENT_NAME}/secrets/aurora-db
+  DB_SECRET: arn:aws:secretsmanager:us-west-2:503561451862:secret:ctimeappclusterAuroraSecret-I5a6lvTjiwN1-TKopOm
+  SECRET_KEY: /copilot/ctime/prod/secrets/SECRET_KEY
+  SENTRY_DSN: /copilot/ctime/prod/secrets/SENTRY_DSN
+  SENTRY_SEND_PII: /copilot/ctime/prod/secrets/SENTRY_SEND_PII
+  SENTRY_TRACE_SAMPLE_RATE: /copilot/ctime/prod/secrets/SENTRY_TRACE_SAMPLE_RATE
+  SENTRY_PROFILE_SAMPLE_RATE: /copilot/ctime/prod/secrets/SENTRY_PROFILE_SAMPLE_RATE

@@ -16,8 +16,11 @@ secrets:
     from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-ctimeappclusterAuroraSecret
 
 # Configure the load balancers in your environment, once created.
-# http:
-#   public:
+#http:
+#  public:
+#    certificates:
+#      - arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT_ID}:certificate/6623f9bd-2e06-4c38-92d9-6b6533cc1ec6
+#    alias: ctime.soarn.dev
 #   private:
 
 # Configure observability for your environment resources.
