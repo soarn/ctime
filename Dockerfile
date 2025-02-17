@@ -12,10 +12,6 @@ RUN apt-get update && apt-get install -y \
 # Copy the current directory contents into the container at /app
 COPY . /app
 
-# Copy the script to construct the connection string
-# COPY construct_connection_string.sh /app/
-# RUN chmod +x /app/construct_connection_string.sh
-
 # Copy and ensure the entrypoint script is executable
 COPY entrypoint.sh /app/
 RUN chmod +x /app/entrypoint.sh
@@ -39,8 +35,6 @@ EXPOSE 5000
 ENV PYTHONPATH=/app
 ENV FLASK_APP=app.app
 ENV FLASK_ENV=production
-# ENV DATABASE_URL=mysql+pymysql://ctimeuser:ctimepassword@db:3306/ctime
 
 # Run the application
-# CMD ["/bin/bash", "-c", "source /app/construct_connection_string.sh && gunicorn -b 0.0.0.0:5000 'app.app:create_app()'"]
 ENTRYPOINT ["/bin/bash", "-c", "/app/entrypoint.sh"]
