@@ -403,15 +403,3 @@ def generate_api_key():
         flash("An error occurred while generating your API key. Please try again.", "danger")
     
     return redirect(url_for('web.profile'))
-
-# Test Sentry
-@web.route("/error")
-@login_required
-def test_error():
-    division_by_zero = 1 / 0
-    return "Hello, World!"
-
-@web.route("/error2")
-@login_required
-def test_error_template():
-    return render_template('test_error.html')

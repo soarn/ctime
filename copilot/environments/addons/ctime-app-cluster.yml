@@ -98,6 +98,8 @@ Resources:
       'aws:copilot:description': 'The ctimeappcluster Aurora Serverless v2 database cluster'
     Type: 'AWS::RDS::DBCluster'
     Properties:
+      StorageEncrypted: true  
+      BackupRetentionPeriod: 7
       MasterUsername:
         !Join [ "",  [ '{{resolve:secretsmanager:', !Ref ctimeappclusterAuroraSecret, ":SecretString:username}}" ]]
       MasterUserPassword:
