@@ -16,6 +16,10 @@ else
         echo "ERROR: DB_SECRET is not set"
         exit 1
     fi
+    if ! echo "$DB_SECRET" | jq . >/dev/null 2>&1; then
+      echo "ERROR: DB_SECRET is not valid JSON"
+      exit 1
+    fi
     DB_USER=$(echo $DB_SECRET | jq -r '.username')
     DB_PASS=$(echo $DB_SECRET | jq -r '.password')
     DB_HOST=$(echo $DB_SECRET | jq -r '.host')

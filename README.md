@@ -64,6 +64,6 @@ Goal 1.2.3:
 ### Docker
 
 1. Copy `.env.example` into `.env`.
-   If you do not want to enable Sentry logging you can leave that section blank
+   If you do not want to enable Sentry logging, you can leave that section blank
 2. While in the root project folder, use the command `docker compose build`
 3. Then use `docker compose --env-file .env up` to start the server
