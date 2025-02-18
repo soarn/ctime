@@ -67,3 +67,7 @@ Goal 1.2.3:
    If you do not want to enable Sentry logging, you can leave that section blank
 2. While in the root project folder, use the command `docker compose build`
 3. Then use `docker compose --env-file .env up` to start the server
+
+## Special Thanks
+
+Thank you to the Bootstrap Team <https://getbootstrap.com/> for element styles and icons, including the favicon!
