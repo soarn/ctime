@@ -21,6 +21,17 @@
     src="https://js.sentry-cdn.com/c8573b9f8ab4d45024aae9909d4353c3.min.js"
     crossorigin="anonymous"
   ></script>
+  <script
+  src="https://browser.sentry-cdn.com/9.1.0/bundle.min.js"
+  integrity="sha384-S2odKBbdLBh1lDGPn2xRIYge5zgMBCpP7gxNiNunUMqVu/2N52jEx5B5t9b+CpaH"
+  crossorigin="anonymous"
+></script>
+<script>
+  Sentry.init({ dsn: "https://be15d4733fd64e81a2a8ab4daaae6633@o234159.ingest.us.sentry.io/1397969" });
+  Sentry.showReportDialog({
+    eventId: "{{ event_id }}",
+  });
+</script>
 </head>
 
 <body class="mb-2">
