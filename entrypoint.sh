@@ -28,6 +28,9 @@ else
     # AWS RDS requires SSL for production
     SSL_CA_PATH="/etc/ssl/certs/rds-combined-ca-bundle.pem"
 
+# test comment
+
+
     if [ ! -f "$SSL_CA_PATH" ]; then
         echo "ERROR: SSL certificate file not found at $SSL_CA_PATH"
         exit 1
