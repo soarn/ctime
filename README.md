@@ -68,6 +68,16 @@ Goal 1.2.3:
 2. While in the root project folder, use the command `docker compose build`
 3. Then use `docker compose --env-file .env up` to start the server
 
+## Building for Production
+
+### AWS Copilot
+
+1. Ensure you have `aws copilot` and the `awscli` installed
+2. Ensure you are logged in to AWS through the cli
+3. #TODO: Add info on adding secrets to Parameter Store
+4. Navigate to the project root and use the command `copilot svc deploy --name ctime-app --env prod`
+5. Wait for the image to build
+
 ## Special Thanks
 
 Thank you to the Bootstrap Team <https://getbootstrap.com/> for element styles and icons, including the favicon!
