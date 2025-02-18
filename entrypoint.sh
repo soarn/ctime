@@ -28,9 +28,6 @@ else
     # AWS RDS requires SSL for production
     SSL_CA_PATH="/etc/ssl/certs/rds-combined-ca-bundle.pem"
 
-# test comment
-
-
     if [ ! -f "$SSL_CA_PATH" ]; then
         echo "ERROR: SSL certificate file not found at $SSL_CA_PATH"
         exit 1
@@ -44,13 +41,14 @@ else
     export CONNECTION_STRING="mysql+mysqlconnector://$DB_USER:$DB_PASS@$DB_HOST:3306/$DB_NAME"
 fi
 
-echo "CONNECTION_STRING=$CONNECTION_STRING"
-
 export PYTHONPATH=/app
 export FLASK_APP=app.app
 export FLASK_ENV=$FLASK_ENV
 
 echo "Secrets loaded successfully!"
+
+# Wait for the database to be ready
+sleep 30
 
 # Start the Flask app
 exec gunicorn -b 0.0.0.0:5000 "app.app:create_app()"

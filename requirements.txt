@@ -18,3 +18,4 @@ pandas
 dataframe_image
 sentry-sdk[flask]
 mysql-connector-python
+matplotlib

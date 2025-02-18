@@ -34,7 +34,7 @@ EXPOSE 5000
 # Set environment variables (will be overridden in production)
 ENV PYTHONPATH=/app
 ENV FLASK_APP=app.app
-ENV FLASK_ENV=production
+# ENV FLASK_ENV=production
 
 # Run the application
 ENTRYPOINT ["/bin/bash", "-c", "/app/entrypoint.sh"]

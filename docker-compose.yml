@@ -28,6 +28,8 @@ services:
       SENTRY_PROFILE_SAMPLE_RATE: ${SENTRY_PROFILE_SAMPLE_RATE}
     volumes:
       - ./app:/app/app
+    # Flask requires SIGINT to stop gracefully
+    stop_signal: SIGINT
 
 volumes:
   mysql-data:
