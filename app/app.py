@@ -114,8 +114,8 @@ def create_app():
             send_default_pii=os.getenv('SENTRY_SEND_PII', 'false').lower() == 'true',
             # Set traces_sample_rate to 1.0 to capture 100%
             # of transactions for tracing.
-            traces_sample_rate=float(os.getenv('SENTRY_TRACE_SAMPLE_RATE', '0.1')),
-            profiles_sample_rate=float(os.getenv('SENTRY_PROFILE_SAMPLE_RATE', '0.1')),
+            traces_sample_rate=float(os.getenv('SENTRY_TRACE_SAMPLE_RATE', '0.5')),
+            profiles_sample_rate=float(os.getenv('SENTRY_PROFILE_SAMPLE_RATE', '0.5')),
             _experiments={
                 # Set continuous_profiling_auto_start to True
                 # to automatically start the profiler on when

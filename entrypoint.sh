@@ -41,14 +41,17 @@ else
     export CONNECTION_STRING="mysql+mysqlconnector://$DB_USER:$DB_PASS@$DB_HOST:3306/$DB_NAME"
 fi
 
-export PYTHONPATH=/app
-export FLASK_APP=app.app
-export FLASK_ENV=$FLASK_ENV
+# Check for sentry
+if [ ! -n "$SENTRY_KEY" ]; then
+	echo "Using developer's Sentry DSN for logging, PII will NOT be shared"
+	SENTRY_DSN=https://c8573b9f8ab4d45024aae9909d4353c3@o234159.ingest.us.sentry.io/4508790454681600
+fi
+
+#export PYTHONPATH=/app
+#export FLASK_APP=app.app
+#export FLASK_ENV=$FLASK_ENV
 
 echo "Secrets loaded successfully!"
-
-# Wait for the database to be ready
-sleep 30
 
 # Start the Flask app
 exec gunicorn -b 0.0.0.0:5000 "app.app:create_app()"
