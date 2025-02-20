@@ -38,7 +38,7 @@ jobs:
           SENTRY_PROJECT: '4508790454681600'
 
       - name: Build Docker image
-        run: docker compose build
+        run: docker build -t soarn/ctime
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
