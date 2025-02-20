@@ -44,7 +44,7 @@ fi
 # Check for sentry
 if [ ! -n "$SENTRY_KEY" ]; then
 	echo "Using developer's Sentry DSN for logging, PII will NOT be shared"
-	SENTRY_DSN=https://c8573b9f8ab4d45024aae9909d4353c3@o234159.ingest.us.sentry.io/4508790454681600
+	export SENTRY_DSN="https://c8573b9f8ab4d45024aae9909d4353c3@o234159.ingest.us.sentry.io/4508790454681600"
 fi
 
 #export PYTHONPATH=/app
