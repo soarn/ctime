@@ -35,7 +35,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: soarndev
-          SENTRY_PROJECT: 4508790454681600
+          SENTRY_PROJECT: '4508790454681600'
 
       - name: Build Docker image
         run: docker compose build
@@ -80,4 +80,4 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: soarndev
-          SENTRY_PROJECT: 4508790454681600
+          SENTRY_PROJECT: '4508790454681600'
