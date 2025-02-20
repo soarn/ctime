@@ -38,7 +38,7 @@ jobs:
           SENTRY_PROJECT: '4508790454681600'
 
       - name: Build Docker image
-        run: docker compose build -t soarn/ctime
+        run: docker compose build
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
@@ -50,9 +50,9 @@ jobs:
           IMAGE_NAME=soarn/ctime:latest
           RELEASE_VERSION="${{ steps.sentry-release.outputs.release_version }}"
           TAGGED_IMAGE_NAME=soarn/ctime:"$RELEASE_VERSION"
-          docker tag app "$IMAGE_NAME"
+          docker tag "$IMAGE_NAME"
           docker push "$IMAGE_NAME"
-          docker tag app "$TAGGED_IMAGE_NAME"
+          docker tag "$TAGGED_IMAGE_NAME"
           docker push "$TAGGED_IMAGE_NAME"
 
       - name: Login to GitHub Container Registry (GHCR)
