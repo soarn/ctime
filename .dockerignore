@@ -1,14 +1,12 @@
 # Custom
 .history/
-.env
-.flaskenv*
+.env*
 !.env.project
 !.env.vault
+.flaskenv*
 .hintrc
 bruno/
-.env*
 *.code-workspace
-
 # BEGIN NODE
 
 # Logs
