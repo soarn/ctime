@@ -5,13 +5,15 @@ from flasgger import Swagger
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
 import os
-from db.db import db
-from db.db_models import User
-from routes.web import web
-from routes.admin import admin
-from routes.globals import globals
-from routes.api_v1 import api_v1
-from utils import get_gravatar_url, get_user_timezone
+import sentry_sdk
+from app.db.db import db
+from app.db.db_models import User
+from app.routes.web import web
+from app.routes.admin import admin
+from app.routes.globals import globals
+from app.routes.api_v1 import api_v1
+from app.routes.health import health
+from app.utils import get_gravatar_url, get_user_timezone
 
 class Config:
     @classmethod
@@ -39,8 +41,14 @@ class ProductionConfig(Config):
     @classmethod
     def validate_config(cls):
         super().validate_config()
-        if os.getenv('FLASK_ENV') == 'production' and not os.getenv('CONNECTION_STRING', '').startswith('mysql+ssl://'):
-            raise ValueError("Production environment requires SSL database connection")
+
+        # Enforce SSL database connection
+        conn_string = os.getenv('CONNECTION_STRING', '')
+        if os.getenv('FLASK_ENV') == 'production':
+            if not conn_string.startswith('mysql+mysqlconnector://'):
+                raise ValueError("CONNECTION_STRING must start with 'mysql+mysqlconnector://'")
+            if '?ssl_ca=' not in conn_string:
+                raise ValueError("Production requires SSL connections to the database")
 
 def create_app():
 
@@ -90,15 +98,38 @@ def create_app():
     # Initialize the database
     # External call to prevent circular imports
     db.init_app(app)
+
+    with app.app_context():
+        db.create_all() # Create the database tables if they do not exist
     
     # Initialize Migrate
     migrate = Migrate(app, db)
+
+    # Initialize Sentry
+    if os.getenv('SENTRY_DSN'):
+        sentry_sdk.init(
+            dsn=os.getenv('SENTRY_DSN'),
+            # Add data like request headers and IP for users,
+            # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+            send_default_pii=os.getenv('SENTRY_SEND_PII', 'false').lower() == 'true',
+            # Set traces_sample_rate to 1.0 to capture 100%
+            # of transactions for tracing.
+            traces_sample_rate=float(os.getenv('SENTRY_TRACE_SAMPLE_RATE', '0.5')),
+            profiles_sample_rate=float(os.getenv('SENTRY_PROFILE_SAMPLE_RATE', '0.5')),
+            _experiments={
+                # Set continuous_profiling_auto_start to True
+                # to automatically start the profiler on when
+                # possible.
+                "continuous_profiling_auto_start": True,
+            },
+        )
 
     # Register Blueprints
     app.register_blueprint(globals)
     app.register_blueprint(web)
     app.register_blueprint(admin)
     app.register_blueprint(api_v1, url_prefix='/api/v1')
+    app.register_blueprint(health)
 
     # Initialize Login Manager
     login_manager = LoginManager(app)
@@ -115,9 +146,20 @@ def create_app():
     app.jinja_env.globals.update(get_gravatar_url=get_gravatar_url)
     app.jinja_env.globals.update(get_user_timezone=get_user_timezone)
     
+    # Explicitly Enable CSRF Protection
+    app.config.update({
+        "WTF_CSRF_ENABLED": True,
+        "WTF_CSRF_TIME_LIMIT": None, # Avoid CSRF token expiration issues
+        "SESSION_COOKIE_SECURE": True, # Ensures secure cookies over HTTPS
+        "SESSION_COOKIE_HTTPONLY": True,
+        "SESSION_COOKIE_SAMESITE": "Lax", # Ensures CSRF token is sent properly
+    })
+
+
     return app
 
 if __name__ == '__main__':
     app = create_app()
     debug_mode = os.getenv('FLASK_ENV') != 'production'
-    app.run(debug=debug_mode)
+    host = '0.0.0.0' if not debug_mode else 'localhost'
+    app.run(host=host, port=5000, debug=debug_mode)

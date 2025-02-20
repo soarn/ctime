@@ -1,0 +1,66 @@
+# The manifest for the "ctime-app" service.
+# Read the full specification for the "Load Balanced Web Service" type at:
+#  https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/
+
+# Your service name will be used in naming your resources like log groups, ECS services, etc.
+name: ctime-app
+type: Load Balanced Web Service
+
+# Distribute traffic to your service.
+http:
+  #  alias: ctime.soarn.dev
+  #  hosted_zone: Z0875881L8Y1JRN08KWT
+  #certificates:
+  # - arn:aws:acm:us-west-2:503561451862:certificate/6623f9bd-2e06-4c38-92d9-6b6533cc1ec6
+  # Requests to this path will be forwarded to your service.
+  # To match all requests you can use the "/" path.
+  path: '/'
+  # You can specify a custom health check path. The default is "/".
+  healthcheck: '/health'
+
+# Configuration for your containers and service.
+image:
+  # Docker build arguments. For additional overrides: https://aws.github.io/copilot-cli/docs/manifest/lb-web-service/#image-build
+  build: Dockerfile
+  # Port exposed through your container to route traffic to it.
+  port: 5000
+
+cpu: 256       # Number of CPU units for the task.
+memory: 512    # Amount of memory in MiB used by the task.
+count: 1       # Number of tasks that should be running in your service.
+exec: true     # Enable running commands in your container.
+network:
+  connect: true # Enable Service Connect for intra-environment traffic between services.
+
+# storage:
+  # readonly_fs: true       # Limit to read-only access to mounted root filesystems.
+
+# Optional fields for more advanced use-cases.
+#
+#variables:                    # Pass environment variables as key value pairs.
+#  LOG_LEVEL: info
+
+#secrets:                      # Pass secrets from AWS Systems Manager (SSM) Parameter Store.
+#  GITHUB_TOKEN: GITHUB_TOKEN  # The key is the name of the environment variable, the value is the name of the SSM parameter.
+
+# You can override any of the values defined above by environment.
+#environments:
+#  test:
+#    count: 2               # Number of tasks to run for the "test" environment.
+#    deployment:            # The deployment strategy for the "test" environment.
+#       rolling: 'recreate' # Stops existing tasks before new ones are started for faster deployments.
+
+# task_role: arn:aws:iam::503561451862:role/ctime-prod-ctime-app-TaskRole
+# execution_role: arn:aws:iam::503561451862:role/ctime-prod-ctime-app-TaskRole
+
+variables:
+  FLASK_ENV: production
+  PYTHONPATH: /app
+
+secrets:
+  DB_SECRET: arn:aws:secretsmanager:us-west-2:503561451862:secret:ctimeappclusterAuroraSecret-I5a6lvTjiwN1-TKopOm
+  SECRET_KEY: /copilot/ctime/prod/secrets/SECRET_KEY
+  SENTRY_DSN: /copilot/ctime/prod/secrets/SENTRY_DSN
+  SENTRY_SEND_PII: /copilot/ctime/prod/secrets/SENTRY_SEND_PII
+  SENTRY_TRACE_SAMPLE_RATE: /copilot/ctime/prod/secrets/SENTRY_TRACE_SAMPLE_RATE
+  SENTRY_PROFILE_SAMPLE_RATE: /copilot/ctime/prod/secrets/SENTRY_PROFILE_SAMPLE_RATE

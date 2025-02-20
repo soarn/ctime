@@ -1,0 +1,151 @@
+Parameters:
+  App:
+    Type: String
+    Description: Your application's name.
+  Env:
+    Type: String
+    Description: The name of the environment being deployed.
+  # Customize your Aurora Serverless cluster by setting the default value of the following parameters.
+  ctimeappclusterDBName:
+    Type: String
+    Description: The name of the initial database to be created in the Aurora Serverless v2 cluster.
+    Default: ctime
+    # Cannot have special characters
+    # Naming constraints: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html#RDS_Limits.Constraints
+  VPCID:
+    Type: String
+    Description: The ID of the VPC in which to create the Aurora Serverless v2 cluster.
+    Default: ""
+  PrivateSubnets:
+    Type: String
+    Description: The IDs of the private subnets in which to create the Aurora Serverless v2 cluster.
+    Default: ""
+
+Mappings:
+  ctimeappclusterEnvScalingConfigurationMap: 
+    prod:
+      "DBMinCapacity": 0.5 # AllowedValues: from 0.5 through 128
+      "DBMaxCapacity": 8   # AllowedValues: from 0.5 through 128
+    
+    All:
+      "DBMinCapacity": 0.5 # AllowedValues: from 0.5 through 128
+      "DBMaxCapacity": 8   # AllowedValues: from 0.5 through 128
+
+Resources:
+  ctimeappclusterDBSubnetGroup:
+    Type: 'AWS::RDS::DBSubnetGroup'
+    Properties:
+      DBSubnetGroupDescription: Group of private subnets for Aurora Serverless v2 cluster.
+      SubnetIds:
+        !Split [',', !Ref PrivateSubnets]
+  
+  ctimeappclusterWorkloadSecurityGroup:
+    Metadata:
+      'aws:copilot:description': 'A security group for one or more workloads to access the Aurora Serverless v2 cluster ctimeappcluster'
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'The Security Group to access Aurora Serverless v2 cluster ctimeappcluster.'
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Name
+          Value: !Sub 'copilot-${App}-${Env}-Aurora'
+
+  ctimeappclusterDBClusterSecurityGroup:
+    Metadata:
+      'aws:copilot:description': 'A security group for your Aurora Serverless v2 cluster ctimeappcluster'
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: The Security Group for the Aurora Serverless v2 cluster.
+      VpcId: !Ref VPCID
+      Tags:
+        - Key: Name
+          Value: !Sub 'copilot-${App}-${Env}-Aurora'
+  
+  ctimeappclusterDBClusterSecurityGroupIngressFromWorkload:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Ingress from one or more workloads in the environment.
+      GroupId: !Ref ctimeappclusterDBClusterSecurityGroup
+      IpProtocol: tcp
+      ToPort: 3306
+      FromPort: 3306
+      SourceSecurityGroupId: !Ref ctimeappclusterWorkloadSecurityGroup
+  
+  ctimeappclusterAuroraSecret:
+    Metadata:
+      'aws:copilot:description': 'A Secrets Manager secret to store your DB credentials'
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: !Sub Aurora main user secret for ${AWS::StackName}
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "admin"}'
+        GenerateStringKey: "password"
+        ExcludePunctuation: true
+        IncludeSpace: false
+        PasswordLength: 16
+  ctimeappclusterDBClusterParameterGroup:
+    Metadata:
+      'aws:copilot:description': 'A DB parameter group for engine configuration values'
+    Type: 'AWS::RDS::DBClusterParameterGroup'
+    Properties:
+      Description: !Ref 'AWS::StackName'
+      Family: 'aurora-mysql8.0'
+      Parameters:
+        character_set_client: 'utf8'
+  
+  ctimeappclusterDBCluster:
+    Metadata:
+      'aws:copilot:description': 'The ctimeappcluster Aurora Serverless v2 database cluster'
+    Type: 'AWS::RDS::DBCluster'
+    Properties:
+      StorageEncrypted: true  
+      BackupRetentionPeriod: 7
+      MasterUsername:
+        !Join [ "",  [ '{{resolve:secretsmanager:', !Ref ctimeappclusterAuroraSecret, ":SecretString:username}}" ]]
+      MasterUserPassword:
+        !Join [ "",  [ '{{resolve:secretsmanager:', !Ref ctimeappclusterAuroraSecret, ":SecretString:password}}" ]]
+      DatabaseName: !Ref ctimeappclusterDBName
+      Engine: 'aurora-mysql'
+      EngineVersion: '8.0.mysql_aurora.3.06.0'
+      DBClusterParameterGroupName: !Ref ctimeappclusterDBClusterParameterGroup
+      DBSubnetGroupName: !Ref ctimeappclusterDBSubnetGroup
+      Port: 3306
+      VpcSecurityGroupIds:
+        - !Ref ctimeappclusterDBClusterSecurityGroup
+      ServerlessV2ScalingConfiguration:
+        # Replace "All" below with "!Ref Env" to set different autoscaling limits per environment.
+        MinCapacity: !FindInMap [ctimeappclusterEnvScalingConfigurationMap, All, DBMinCapacity]
+        MaxCapacity: !FindInMap [ctimeappclusterEnvScalingConfigurationMap, All, DBMaxCapacity]
+  
+  ctimeappclusterDBWriterInstance:
+    Metadata:
+      'aws:copilot:description': 'The ctimeappcluster Aurora Serverless v2 writer instance'
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBClusterIdentifier: !Ref ctimeappclusterDBCluster
+      DBInstanceClass: db.serverless
+      Engine: 'aurora-mysql'
+      PromotionTier: 1
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: AWS::Region
+
+  ctimeappclusterSecretAuroraClusterAttachment:
+    Type: AWS::SecretsManager::SecretTargetAttachment
+    Properties:
+      SecretId: !Ref ctimeappclusterAuroraSecret
+      TargetId: !Ref ctimeappclusterDBCluster
+      TargetType: AWS::RDS::DBCluster
+
+Outputs:
+  ctimeappclusterSecret:
+    Description: "The JSON secret that holds the database username and password. Fields are 'host', 'port', 'dbname', 'username', 'password', 'dbClusterIdentifier' and 'engine'"
+    Value: !Ref ctimeappclusterAuroraSecret
+    Export:
+      Name: !Sub ${App}-${Env}-ctimeappclusterAuroraSecret
+  ctimeappclusterSecurityGroup:
+    Description: "The security group to attach to the workload."
+    Value: !Ref ctimeappclusterWorkloadSecurityGroup  
+    Export:
+      Name: !Sub ${App}-${Env}-ctimeappclusterSecurityGroup

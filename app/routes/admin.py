@@ -2,14 +2,23 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Blueprint, render_template, request, redirect, flash, url_for
 from flask_login import current_user, login_required
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from pytz import utc
 import logging  
-from db.db_models import User, WeeklySchedule, TimeOffRequest
-from db.db import db
-from forms import AdminWeeklyScheduleForm, ApproveRejectForm, AdminUserForm
-from utils import get_user_timezone
+from app.db.db_models import User, WeeklySchedule, TimeOffRequest
+from app.db.db import db
+from app.forms import AdminWeeklyScheduleForm, ApproveRejectForm, AdminUserForm
+from app.utils import get_user_timezone
 
+# Initialize logger
 logger = logging.getLogger(__name__)
+
+# Rate Limiter Configuration
+limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"]
+        )
 
 def admin_required(f):
     @wraps(f)
@@ -274,3 +283,19 @@ def manage_admin(user_id):
         return redirect(url_for("admin.manage_admin", user_id=user_id))
 
     return render_template("manage_admin.html", user=user, user_form=user_form)
+
+# Test Sentry
+@admin.route("/error")
+@login_required
+@admin_required
+@limiter.limit("3 per hour")
+def test_error():
+    division_by_zero = 1 / 0
+    return "Hello, World!"
+
+@admin.route("/error2")
+@login_required
+@admin_required
+@limiter.limit("3 per hour")
+def test_error_template():
+    return render_template('test_error.html')

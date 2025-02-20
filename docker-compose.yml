@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  
+  app:
+    image: soarn/ctime:pr4
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV: ${FLASK_ENV}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      SECRET_KEY: ${SECRET_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_SEND_PII: ${SENTRY_SEND_PII}
+      SENTRY_TRACE_SAMPLE_RATE: ${SENTRY_TRACE_SAMPLE_RATE}
+      SENTRY_PROFILE_SAMPLE_RATE: ${SENTRY_PROFILE_SAMPLE_RATE}
+    volumes:
+      - ./app:/app/app
+    # Flask requires SIGINT to stop gracefully
+    stop_signal: SIGINT
+
+volumes:
+  mysql-data:
