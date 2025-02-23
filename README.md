@@ -58,6 +58,8 @@ This guide walks through deploying ctime using AWS Copilot CLI.
 Run the following commands to initialize the AWS Copilot project:
 
 ```bash
+git clone https://github.com/soarn/ctime.git
+cd ctime
 copilot init
 ctime # What would you like to name the application?
 "Load Balanced Web Service" # What type of service would you like?
