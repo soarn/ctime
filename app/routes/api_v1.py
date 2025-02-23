@@ -326,9 +326,17 @@ def get_user_schedule_by_identifier(user, identifier):
 
     # Filter time-off requests for current and future dates only
     today = datetime.today().date()
-    time_off_requests = [t for t in time_off_requests if t.date >= today]
+    start_of_week = today - timedelta(days=today.weekday()) # Get Monday of this week
+    days_of_week = [(start_of_week + timedelta(days=i)).strftime("%A, %b %d") for i in range(7)] # Monday to Sunday
+    day_date_mapping = {d.split(",")[0]: d for d in days_of_week}  # {"Monday": "Monday, Feb 05", ...}
     
-    time_off_data = {t.date.strftime("%A"): True for t in time_off_requests}
+    time_off_requests = [t for t in time_off_requests if t.date >= today]
+
+    # Organize time-off data properly
+    time_off_data = {}
+    for t in time_off_requests:
+        day_of_week = t.date.strftime("%A") # Convert date to day name
+        time_off_data[day_of_week] = True
 
     schedule_data = []
     for schedule in schedules:
@@ -347,7 +355,7 @@ def get_user_schedule_by_identifier(user, identifier):
                 "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_end_time_local else None,
                 "is_virtual": schedule.is_virtual,
                 "is_unavailable": schedule.is_unavailable,
-                "has_day_off": time_off_data.get(schedule.day_of_week, False)
+                "has_day_off": time_off_data[schedule.day_of_week]
             })
         except Exception as e:
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
