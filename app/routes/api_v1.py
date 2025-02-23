@@ -141,6 +141,12 @@ def get_user_schedule(user):
     except Exception as e:
         return jsonify({'message': f"Invalid timezone: {e}"}), 400
 
+    # Filter time-off requests for current and future dates only
+    today = datetime.today().date()
+    time_off_requests = [t for t in time_off_requests if t.date >= today]
+
+    time_off_data = {t.date.strftime("%A"): True for t in time_off_requests}
+
     schedule_data = []
     for schedule in schedules:
         # Convert the schedule times to the specified timezone
@@ -157,7 +163,8 @@ def get_user_schedule(user):
                 "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time and schedule_start_time_local else None,
                 "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_end_time_local else None,
                 "is_virtual": schedule.is_virtual,
-                "is_unavailable": schedule.is_unavailable
+                "is_unavailable": schedule.is_unavailable,
+                "has_day_off": time_off_data.get(schedule.day_of_week, False)
             })
         except Exception as e:
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
@@ -208,6 +215,16 @@ def get_all_schedules(user):
     except Exception as e:
         return jsonify({'message': f"Invalid timezone: {e}"}), 400
 
+    today = datetime.today().date()
+    time_off_requests = [t for t in time_off_requests if t.date >= today]
+
+    time_off_data = {}
+    for t in time_off_requests:
+        day_of_week = t.date.strftime("%A")
+        if t.user_id not in time_off_data:
+            time_off_data[t.user_id] = {}
+        time_off_data[t.user_id][day_of_week] = True
+
     all_schedules = {}
     for schedule in schedules:
         if schedule.user_id not in all_schedules:
@@ -230,7 +247,8 @@ def get_all_schedules(user):
                 "start_time": schedule_start_time_local.strftime('%H:%M%Z') if schedule.start_time and schedule_start_time_local else None,
                 "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_end_time_local else None,
                 "is_virtual": schedule.is_virtual,
-                "is_unavailable": schedule.is_unavailable
+                "is_unavailable": schedule.is_unavailable,
+                "has_day_off": time_off_data.get(schedule.user_id, {}).get(schedule.day_of_week, False)
             })
         except Exception as e:
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
