@@ -110,10 +110,10 @@ After running this command, follow the recommended follow-up actions:
     network:
       vpc:
         security_groups:
-          - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-ctimeSecurityGroup
+          - from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-ctimeClusterSecurityGroup
     secrets:
       DB_SECRET:
-        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-ctimeAuroraSecret
+        from_cfn: ${COPILOT_APPLICATION_NAME}-${COPILOT_ENVIRONMENT_NAME}-ctimeClusterAuroraSecret
     ```
 
 #### 4. Set Up Health Check & Secrets in Service Manifest
