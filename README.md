@@ -104,7 +104,7 @@ After running this command, follow the recommended follow-up actions:
   
     `copilot env deploy`
 
-2. Update the environment manifest:
+2. Update the environment manifest (`copilot/environments/prod/manifest.yml`):
 
     ```yaml
     network:
@@ -118,7 +118,7 @@ After running this command, follow the recommended follow-up actions:
 
 #### 4. Set Up Health Check & Secrets in Service Manifest
 
-Edit the app manifest to include the health check and secrets:
+Edit the app manifest (`/copilot/ctime/manifest.yml`) to include the health check and secrets:
 
 1. Retrieve the ARN of Your Aurora Secret
 
@@ -148,7 +148,7 @@ Edit the app manifest to include the health check and secrets:
 Now, deploy your service:
 
 ```bash
-copilot svc deploy --name ctime-east-alb
+copilot svc deploy --name ctime
 ```
 
 ### Option 3: Local Development
