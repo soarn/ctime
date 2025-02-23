@@ -355,7 +355,8 @@ def get_user_schedule_by_identifier(user, identifier):
                 "end_time": schedule_end_time_local.strftime('%H:%M%Z') if schedule.end_time and schedule_end_time_local else None,
                 "is_virtual": schedule.is_virtual,
                 "is_unavailable": schedule.is_unavailable,
-                "has_day_off": time_off_data[schedule.day_of_week]
+                "day_off_info": time_off_data
+                # "has_day_off": time_off_data[schedule.day_of_week]
             })
         except Exception as e:
             return jsonify({'message': f"Error converting schedule times: {e}"}), 500
