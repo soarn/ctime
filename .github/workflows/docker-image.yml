@@ -36,6 +36,8 @@ jobs:
           VERSION=$(npx semantic-release --dry-run | grep -oP 'The next release version is \K[\d.]+' || echo "latest")
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Determined release version: $VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Sentry Release
         if: github.event_name == 'release'
