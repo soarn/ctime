@@ -1,0 +1,114 @@
+version: 2.1
+
+executors:
+  docker-executor:
+    docker:
+      - image: circleci/python:3.11
+    working_directory: ~/repo
+
+jobs:
+  semantic-release:
+    executor: docker-executor
+    steps:
+      - checkout
+      - run:
+          name: Install Semantic Release
+          command: |
+            npm install -g semantic-release @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/git
+      - run:
+          name: Determine Release Version
+          command: |
+            export VERSION=$(npx semantic-release --dry-run | grep -oP 'The next release version is \K[\d.]+' || echo "latest")
+            echo "export RELEASE_VERSION=$VERSION" >> $BASH_ENV
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  build-and-push:
+    executor: docker-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - setup_remote_docker
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t soarn/ctime:latest .
+            docker tag soarn/ctime:latest soarn/ctime:$RELEASE_VERSION
+            docker tag soarn/ctime:latest ghcr.io/${CIRCLE_PROJECT_USERNAME}/ctime:latest
+            docker tag soarn/ctime:latest ghcr.io/${CIRCLE_PROJECT_USERNAME}/ctime:$RELEASE_VERSION
+      - run:
+          name: Login to DockerHub
+          command: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Push to DockerHub
+          command: |
+            docker push soarn/ctime:latest
+            docker push soarn/ctime:$RELEASE_VERSION
+      - run:
+          name: Login to GHCR
+          command: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+      - run:
+          name: Push to GHCR
+          command: |
+            docker push ghcr.io/${CIRCLE_PROJECT_USERNAME}/ctime:latest
+            docker push ghcr.io/${CIRCLE_PROJECT_USERNAME}/ctime:$RELEASE_VERSION
+
+  sentry-release:
+    executor: docker-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install Sentry CLI
+          command: pip install sentry-cli
+      - run:
+          name: Create Sentry Release
+          command: |
+            sentry-cli releases new "$RELEASE_VERSION"
+            sentry-cli releases set-commits --auto "$RELEASE_VERSION"
+            sentry-cli releases set-deployed "$RELEASE_VERSION" --env production
+        environment:
+          SENTRY_AUTH_TOKEN: $SENTRY_AUTH_TOKEN
+          SENTRY_ORG: soarndev
+          SENTRY_PROJECT: '4508790454681600'
+
+#  deploy:
+#    executor: docker-executor
+#    steps:
+#      - checkout
+#      - attach_workspace:
+#          at: .
+#      - run:
+#          name: Install AWS Copilot
+#          command: |
+#            curl -Lo copilot https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux
+#            chmod +x copilot
+#            sudo mv copilot /usr/local/bin/
+#      - run:
+#          name: Authenticate with AWS
+#          command: |
+#            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+#            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+#            aws configure set default.region us-west-2
+#      - run:
+#          name: Deploy with AWS Copilot
+#          command: copilot svc deploy --name ctime-app --env prod
+
+workflows:
+  version: 2
+  ci-cd:
+    jobs:
+      - semantic-release
+      - build-and-push:
+          requires:
+            - semantic-release
+      - sentry-release:
+          requires:
+            - build-and-push
+#      - deploy:
+#          requires:
+#            - build-and-push
