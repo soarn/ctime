@@ -32,12 +32,12 @@ jobs:
 
       - name: Determine Version with Semantic Release
         id: semantic
+        env:
+          GH_TOKEN: ${{ secrets.GH_FINE_GRAINED_PAT }}
         run: |
           VERSION=$(npx semantic-release --dry-run | grep -oP 'The next release version is \K[\d.]+' || echo "latest")
           echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
           echo "Determined release version: $VERSION"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Create Sentry Release
         if: github.event_name == 'release'
