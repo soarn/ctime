@@ -151,6 +151,13 @@ Now, deploy your service:
 copilot svc deploy --name ctime
 ```
 
+#### Troubleshooting AWS Deployment
+
+If you encounter an issue with the flask app being unable to connect to Aurora:
+1. Go to the AWS Console and navigate to VPC > Security groups.
+2. Find the security group with a name similar to `ctime-prod-AddonsStack-1G0AYZOIWXXDO-ctimeclusterDBClusterSecurityGroup-d6DcghtYxsIA`
+3. Add a new Inbound Rule for `MYSQL/Aurora` with the source being your Environment Security Group, which should be similar to `sg-0ae98d3653e530e59 / ctime-prod-EnvironmentSecurityGroup-V4HQsz9vdayN`.
+
 ### Option 3: Local Development
 
 To run locally without Docker:
