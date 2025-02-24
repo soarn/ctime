@@ -1,14 +1,17 @@
-name: CI/CD - Docker Build & Sentry Release
+name: CI/CD - Docker Build & AWS Copilot Deploy
 
 on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
   release:
     types: [published]
+
+env:
+  IMAGE_NAME: soarn/ctime
+  GHCR_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/ctime
+  SENTRY_PROJECT: '4508790454681600'
+  SENTRY_ORG: soarndev
 
 jobs:
   build-and-push:
@@ -22,62 +25,80 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Sentry CLI
-        run: pip install sentry-cli
+      - name: Install Dependencies
+        run: |
+          pip install sentry-cli
+          npm install -g semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/changelog @semantic-release/git
+
+      - name: Determine Version with Semantic Release
+        id: semantic
+        run: |
+          VERSION=$(npx semantic-release --dry-run | grep -oP 'The next release version is \K[\d.]+' || echo "latest")
+          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Determined release version: $VERSION"
 
       - name: Create Sentry Release
-        id: sentry-release
+        if: github.event_name == 'release'
         run: |
-          RELEASE_VERSION="${GITHUB_SHA::7}"
           sentry-cli releases new "$RELEASE_VERSION"
-          echo "release_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT
           sentry-cli releases set-commits --auto "$RELEASE_VERSION"
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: soarndev
-          SENTRY_PROJECT: '4508790454681600'
+          SENTRY_ORG: ${{ env.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ env.SENTRY_PROJECT }}
 
-      - name: Build Docker image
-        run: docker compose build
-
-      - name: Login to Docker Hub
-        if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
-        run: docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-        
-      - name: Push to Docker Hub
-        if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
+      - name: Build Docker Image
         run: |
-          IMAGE_NAME=soarn/ctime:latest
-          RELEASE_VERSION="${{ steps.sentry-release.outputs.release_version }}"
-          TAGGED_IMAGE_NAME=soarn/ctime:"$RELEASE_VERSION"
-          docker tag "$IMAGE_NAME"
-          docker push "$IMAGE_NAME"
-          docker tag "$TAGGED_IMAGE_NAME"
-          docker push "$TAGGED_IMAGE_NAME"
+          docker build -t $IMAGE_NAME:latest .
+          docker tag $IMAGE_NAME:latest $IMAGE_NAME:$RELEASE_VERSION
+          docker tag $IMAGE_NAME:latest $GHCR_IMAGE_NAME:latest
+          docker tag $IMAGE_NAME:latest $GHCR_IMAGE_NAME:$RELEASE_VERSION
 
-      - name: Login to GitHub Container Registry (GHCR)
-        if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to DockerHub
+        if: github.event_name == 'release'
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Push to GitHub Container Registry (GHCR)
-        if: github.event_name != 'pull_request' # Only push on pushes/releases, not PRs
+      - name: Push to DockerHub
+        if: github.event_name == 'release'
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/ctime:latest
-          RELEASE_VERSION="${{ steps.sentry-release.outputs.release_version }}"
-          TAGGED_IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/ctime:"$RELEASE_VERSION"
-          docker tag app "$IMAGE_NAME"
-          docker push "$IMAGE_NAME"
-          docker tag app "$TAGGED_IMAGE_NAME"
-          docker push "$TAGGED_IMAGE_NAME"
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$RELEASE_VERSION
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'release'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push to GHCR
+        if: github.event_name == 'release'
+        run: |
+          docker push $GHCR_IMAGE_NAME:latest
+          docker push $GHCR_IMAGE_NAME:$RELEASE_VERSION
 
       - name: Set Sentry Release Deployed
-        if: github.event_name != 'pull_request' # Only set deployed on pushes/releases, not PRs
-        run: sentry-cli releases set-deployed --auto ${{ steps.sentry-release.outputs.release_version }} --environment=production
+        if: github.event_name == 'release'
+        run: sentry-cli releases set-deployed $RELEASE_VERSION --env production
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: soarndev
-          SENTRY_PROJECT: '4508790454681600'
+          SENTRY_ORG: ${{ env.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ env.SENTRY_PROJECT }}
+
+  # deploy:
+  #   needs: build-and-push
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'release'
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Install AWS Copilot CLI
+  #       run: |
+  #         curl -Lo copilot https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux && chmod +x copilot && sudo mv copilot /usr/local/bin/
+
+  #     - name: Authenticate with AWS
+  #       run: |
+  #         aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws configure set default.region us-west-2
+
+  #     - name: Deploy with AWS Copilot
+  #       run: copilot svc deploy --name ctime-app --env prod
