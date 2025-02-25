@@ -7,7 +7,7 @@ executors:
     working_directory: ~/repo
   node-executor:
     docker:
-      - image: cimg/node:20
+      - image: cimg/node:23.8.0
     working_directory: ~/repo
 
 jobs:
