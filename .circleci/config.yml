@@ -1,14 +1,18 @@
 version: 2.1
 
 executors:
-  docker-executor:
+  python-executor:
     docker:
       - image: cimg/python:3.11
+    working_directory: ~/repo
+  node-executor:
+    docker:
+      - image: cimg/node:20
     working_directory: ~/repo
 
 jobs:
   semantic-release:
-    executor: docker-executor
+    executor: node-executor
     steps:
       - checkout
       - run:
@@ -26,7 +30,7 @@ jobs:
             - .
 
   build-and-push:
-    executor: docker-executor
+    executor: python-executor
     steps:
       - checkout
       - attach_workspace:
@@ -57,7 +61,7 @@ jobs:
             docker push ghcr.io/${CIRCLE_PROJECT_USERNAME}/ctime:$RELEASE_VERSION
 
   sentry-release:
-    executor: docker-executor
+    executor: python-executor
     steps:
       - checkout
       - attach_workspace:
