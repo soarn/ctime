@@ -16,6 +16,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Set npm global prefix
+          command: |
+            npm config set prefix '~/.npm-global'
+            export PATH=~/.npm-global/bin:$PATH
+      - run:
           name: Install Semantic Release
           command: |
             npm install -g semantic-release @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/git
