@@ -33,6 +33,8 @@ jobs:
           root: .
           paths:
             - .
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
 
   build-and-push:
     executor: python-executor
