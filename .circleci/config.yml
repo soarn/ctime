@@ -24,7 +24,7 @@ jobs:
           root: .
           paths:
             - .
-
+            
   build-and-push:
     executor: docker-executor
     steps:
@@ -68,35 +68,13 @@ jobs:
       - run:
           name: Create Sentry Release
           command: |
+            export SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+            export SENTRY_ORG=soarndev
+            export SENTRY_PROJECT='4508790454681600'
+
             sentry-cli releases new "$RELEASE_VERSION"
             sentry-cli releases set-commits --auto "$RELEASE_VERSION"
             sentry-cli releases set-deployed "$RELEASE_VERSION" --env production
-        environment:
-          SENTRY_AUTH_TOKEN: $SENTRY_AUTH_TOKEN
-          SENTRY_ORG: soarndev
-          SENTRY_PROJECT: '4508790454681600'
-
-#  deploy:
-#    executor: docker-executor
-#    steps:
-#      - checkout
-#      - attach_workspace:
-#          at: .
-#      - run:
-#          name: Install AWS Copilot
-#          command: |
-#            curl -Lo copilot https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux
-#            chmod +x copilot
-#            sudo mv copilot /usr/local/bin/
-#      - run:
-#          name: Authenticate with AWS
-#          command: |
-#            aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-#            aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-#            aws configure set default.region us-west-2
-#      - run:
-#          name: Deploy with AWS Copilot
-#          command: copilot svc deploy --name ctime-app --env prod
 
 workflows:
   version: 2
@@ -109,6 +87,3 @@ workflows:
       - sentry-release:
           requires:
             - build-and-push
-#      - deploy:
-#          requires:
-#            - build-and-push
