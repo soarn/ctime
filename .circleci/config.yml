@@ -3,7 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: circleci/python:3.11
+      - image: cimg/python:3.11
     working_directory: ~/repo
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
           root: .
           paths:
             - .
-            
+
   build-and-push:
     executor: docker-executor
     steps:
