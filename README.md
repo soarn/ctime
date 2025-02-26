@@ -158,6 +158,10 @@ If you encounter an issue with the flask app being unable to connect to Aurora:
 2. Find the security group with a name similar to `ctime-prod-AddonsStack-1G0AYZOIWXXDO-ctimeclusterDBClusterSecurityGroup-d6DcghtYxsIA`
 3. Add a new Inbound Rule for `MYSQL/Aurora` with the source being your Environment Security Group, which should be similar to `sg-0ae98d3653e530e59 / ctime-prod-EnvironmentSecurityGroup-V4HQsz9vdayN`.
 
+If you encounter an issue with the CSRF token when attempting to use form fields:
+1. Ensure you have set the `SECRET_KEY` environment variable
+2. When deploying in a production environment, you are **required** to use HTTPS/SSL to access the application. This is as easy as connecting your existing domain to the ELB. Simply add a new rule for HTTPS/:443 and select a Target ACM of your domain/subdomain. If you do not have one created yet in ACM, there will be an option to configure it during the rule creation process. After the domain verification completes, you can add it as the target. Ensure that HTTP/:80 traffic is redirected to HTTPS/:443 in your ACM as well.
+
 ### Option 3: Local Development
 
 To run locally without Docker:
