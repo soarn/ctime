@@ -1,26 +1,32 @@
 name: Docker Build, Push & Sentry Release
 
 on:
-  pull_request:
+  workflow_dispatch:
+  push:
     branches:
       - master
-    types:
-      - closed
-    paths:
-      - '.release-please-manifest.json' # Trigger only when release-please PR is merged
-  workflow_dispatch:
+    tags:
+      - 'v*'
+    pull_request:
+      branches:
+        - 'master'
 
 permissions:
   contents: write
-  packages: write # Required to push to GitHub Container Registry
+  packages: write
 
 jobs:
   docker-build-push-sentry:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: soarn/ctime
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,47 +36,40 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      - name: Extract release version
-        id: extract_version
-        run: |
-          RELEASE_VERSION=$(jq -r '.releases."ctime"?.version' .release-please-manifest.json)
-          if [[ -z "$RELEASE_VERSION" ]]; then
-            RELEASE_VERSION="0.0.0-dev" # Default if version not found (e.g., no release yet)
-          fi
-          echo "RELEASE_VERSION=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Build Docker image
-        run: docker build -t soarn/ctime:${{ steps.extract_version.outputs.RELEASE_VERSION }} .
-        # Consider adding --build-arg for things like version number if needed
-
-      - name: Log in to Docker Hub
+      - name: Login to DockerHub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Push Docker image to Docker Hub
-        run: docker push soarn/ctime:${{ steps.extract_version.outputs.RELEASE_VERSION }}
+      - name: Build and Push To Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: Install Sentry CLI
         run: pip install --upgrade sentry-cli
 
       - name: Create Sentry release
-        run: sentry-cli releases new ${{ steps.extract_version.outputs.RELEASE_VERSION }}
+        run: sentry-cli releases new ${{ steps.meta.outputs.tags }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: soarndev
           SENTRY_PROJECT: ctime
 
       - name: Associate commits with Sentry release
-        run: sentry-cli releases set-commits --auto ${{ steps.extract_version.outputs.RELEASE_VERSION }}
+        run: sentry-cli releases set-commits --auto ${{ steps.meta.outputs.tags }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: soarndev
           SENTRY_PROJECT: ctime
 
       - name: Finalize Sentry release
-        run: sentry-cli releases finalize ${{ steps.extract_version.outputs.RELEASE_VERSION }}
+        run: sentry-cli releases finalize ${{ steps.meta.outputs.tags }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: soarndev
