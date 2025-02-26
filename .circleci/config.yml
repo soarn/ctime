@@ -11,7 +11,7 @@ executors:
     working_directory: ~/repo
 
 jobs:
-  semantic-release:
+  changesets-version: # Renamed from semantic-release
     executor: node-executor
     steps:
       - checkout
@@ -21,20 +21,22 @@ jobs:
             npm config set prefix '~/.npm-global'
             export PATH=~/.npm-global/bin:$PATH
       - run:
-          name: Install Semantic Release
-          command: |
-            npm install -g semantic-release @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/git
+          name: Install Changesets CLI
+          command: npm install -g @changesets/cli
       - run:
-          name: Determine Release Version
+          name: Initialize Changesets
+          command: changeset init
+      - run:
+          name: Determine Release Version with Changesets
           command: |
-            export VERSION=$(npx semantic-release --dry-run | grep -oP 'The next release version is \K[\d.]+' || echo "latest")
+            VERSION=$(changeset version --no-commit --dry-run | grep -oP 'Bumping version to \K([\d.]+)' || echo "latest")
             echo "export RELEASE_VERSION=$VERSION" >> $BASH_ENV
       - persist_to_workspace:
           root: .
           paths:
             - .
     environment:
-      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_TOKEN: ${GITHUB_TOKEN} # Keep GITHUB_TOKEN for potential future GitHub actions
 
   build-and-push:
     executor: python-executor
@@ -91,10 +93,10 @@ workflows:
   version: 2
   ci-cd:
     jobs:
-      - semantic-release
+      - changesets-version # Renamed job in workflow too
       - build-and-push:
           requires:
-            - semantic-release
+            - changesets-version
       - sentry-release:
           requires:
             - build-and-push
