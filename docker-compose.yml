@@ -13,7 +13,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
   
   app:
-    image: soarn/ctime:pr4
+    image: soarn/ctime:latest
     depends_on:
       db:
         condition: service_healthy
