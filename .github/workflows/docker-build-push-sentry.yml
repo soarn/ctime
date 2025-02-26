@@ -8,6 +8,7 @@ on:
       - closed
     paths:
       - '.release-please-manifest.json' # Trigger only when release-please PR is merged
+  workflow_dispatch:
 
 permissions:
   contents: write
