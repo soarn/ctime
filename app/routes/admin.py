@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Blueprint, render_template, request, redirect, flash, url_for
+from flask import Blueprint, render_template, request, redirect, flash, url_for, jsonify
 from flask_login import current_user, login_required
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -9,7 +9,7 @@ import logging
 from app.db.db_models import User, WeeklySchedule, TimeOffRequest
 from app.db.db import db
 from app.forms import AdminWeeklyScheduleForm, ApproveRejectForm, AdminUserForm
-from app.utils import get_user_timezone
+from app.utils import get_user_timezone, check_for_updates
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -299,3 +299,13 @@ def test_error():
 @limiter.limit("3 per hour")
 def test_error_template():
     return render_template('test_error.html')
+
+# Version Updates
+
+@admin.route("/check-update")
+@login_required
+@admin_required
+def check_update():
+    """API route to check for updates."""
+    update_available = check_for_updates()
+    return jsonify({"update_available": bool(update_available), "latest_version": update_available})
