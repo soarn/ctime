@@ -37,8 +37,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Inject Version into Entrypoint
-        command: 
-          echo "export APP_VERSION=\"${steps.meta.outputs.tags}\"" >> entrypoint.sh
+        run: |
+          echo "export APP_VERSION=\"${{ steps.meta.outputs.tags }}\"" >> entrypoint.sh
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'

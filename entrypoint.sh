@@ -50,7 +50,7 @@ fi
 # Check if APP_VERSION is set, otherwise use 'unknown'
 export APP_VERSION="${APP_VERSION:-unknown}"
 
-echo "Running ctime versionO: $APP_VERSION"
+echo "Running ctime version: $APP_VERSION"
 
 echo "Secrets loaded successfully!"
 

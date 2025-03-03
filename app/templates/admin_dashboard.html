@@ -48,7 +48,7 @@
 
             if (data.update_available) {
                 document.getElementById("update-alert").innerHTML = `
-                <div class="alert alert-warning" role="alert">
+                <div class="alert alert-warning" aria-live="assertive" role="alert">
                 A new version (<strong>${data.latest_version}</strong>) is available!
                 <a href="https://github.com/soarn/ctime/releases/latest" target="_blank">View Release</a>.
                 </div>
