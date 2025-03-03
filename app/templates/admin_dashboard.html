@@ -39,4 +39,29 @@
         }
     }
 </script>
+
+<script>
+    async function checkForUpdates() {
+        try {
+            const response = await fetch("/check-update");
+            const data = await response.json();
+
+            if (data.update_available) {
+                document.getElementById("update-alert").innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                A new version (<strong>${data.latest_version}</strong>) is available!
+                <a href="https://github.com/soarn/ctime/releases/latest" target="_blank">View Release</a>.
+                </div>
+                `;
+            }
+        } catch (error) {
+            console.error("Failed to check for updates: ", error);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", checkForUpdates);
+</script>
+
+<div id="update-alert"></div>
+
 {% endblock %}

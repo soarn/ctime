@@ -47,9 +47,10 @@ if [ ! -n "$SENTRY_KEY" ]; then
 	export SENTRY_DSN="https://c8573b9f8ab4d45024aae9909d4353c3@o234159.ingest.us.sentry.io/4508790454681600"
 fi
 
-#export PYTHONPATH=/app
-#export FLASK_APP=app.app
-#export FLASK_ENV=$FLASK_ENV
+# Check if APP_VERSION is set, otherwise use 'unknown'
+export APP_VERSION="${APP_VERSION:-unknown}"
+
+echo "Running ctime versionO: $APP_VERSION"
 
 echo "Secrets loaded successfully!"
 
